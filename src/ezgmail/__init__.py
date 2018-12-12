@@ -6,7 +6,7 @@ By Al Sweigart al@inventwithpython.com
 Note: Unless you know what you're doing, also use the default 'me' value for userId parameters in this module.
 '''
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 
 import base64
