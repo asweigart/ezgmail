@@ -38,6 +38,11 @@ To send an email from your "example@gmail.com" account:
 
 The ``attachments`` argument is optional, and if you only have one attachment you can just specify the filename string. Also note that Gmail will most likely filter any emails that contain *.exe*, *.zip*, or any other suspicious attachments.
 
+The cc and bcc fields are also optional keyword arguments:
+
+    >>> import ezgmail
+    >>> ezgmail.send('recipient@example.com', 'Subject line', 'Body of the email', cc='friend@example.com', bcc='otherfriend@example.com,someoneelse@example.com')
+
 The main classes in ``ezgmail`` are ``GmailThread`` and ``GmailMessage``. A ``GmailThread`` is a chain of emails replying to one another, while a ``GmailMessage`` is an individual email in a thread.
 
 To retrieve unread emails:

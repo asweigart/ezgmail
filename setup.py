@@ -23,7 +23,7 @@ setup(
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
     test_suite='tests',
-    install_requires=[],
+    install_requires=['google-api-python-client', 'oauth2client'],
     keywords='',
     classifiers=[
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
