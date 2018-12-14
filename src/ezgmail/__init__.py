@@ -30,6 +30,11 @@ SCOPES = 'https://mail.google.com/' # read-write mode
 SERVICE = None
 EMAIL_ADDRESS = None
 
+
+class EZGmailException(Exception):
+    pass # This class exists for this module to raise for EZGmail-specific problems.
+
+
 class GmailThread:
     '''Represents a thread of Gmail messages. These objects are returned by the users.threads.get() API call. They contain references to a list of GmailMessage objects.'''
     def __init__(self, threadObj):
@@ -108,6 +113,7 @@ class GmailMessage:
         self.snippet = messageObj['snippet']
         self.historyId = messageObj['historyId']
         self.timestamp = datetime.datetime.fromtimestamp(int(messageObj['internalDate']) // 1000)
+        self.attachments = {} # Keys are filename and values are {'id': attachment id as str, 'size': size as int}.
 
         # Find the headers for the sender, recipient, and subject
         for header in messageObj['payload']['headers']:
@@ -121,7 +127,6 @@ class GmailMessage:
             if header['name'].upper() == 'CONTENT-TYPE':
                 emailEncoding = _parseContentTypeHeaderForEncoding(header['value'])
 
-
         # Find the plaintext email part, get the encoding, and use it to get the email body.
         if 'parts' in messageObj['payload'].keys():
             for part in messageObj['payload']['parts']:
@@ -134,6 +139,12 @@ class GmailMessage:
                     # `originalBody` has the full body of the email, while the more useful `body` only has everything up until the quoted reply part.
                     self.originalBody = base64.urlsafe_b64decode(part['body']['data']).decode(emailEncoding)
                     self.body = removeQuotedParts(self.originalBody)
+                if 'filename' in part.keys() and part['filename'] != '':
+                    # This only gets the attachment ID. The actual attachment must be downloaded with downloadAttachment().
+                    attachmentId = part['body']['attachmentId']
+                    attachmentSize = part['body']['size']
+                    self.attachments[part['filename']] = {'id': attachmentId, 'size': attachmentSize}
+
         elif 'body' in messageObj['payload'].keys():
             #for header in messageObj['payload']['headers']:
             #    if header['name'].upper() == 'CONTENT-TYPE':
@@ -141,22 +152,36 @@ class GmailMessage:
             self.originalBody = base64.urlsafe_b64decode(messageObj['payload']['body']['data']).decode(emailEncoding)
             self.body = removeQuotedParts(self.originalBody)
 
-
-
         # TODO - Future features include labels and attachments.
 
     def __str__(self):
         return '<GmailMessage from=%r to=%r timestamp=%r subject=%r snippet=%r>' % (self.sender, self.recipient, self.timestamp, self.subject, self.snippet)
 
+
     def senders(self):
         return [self.sender]
+
 
     def latestTimestamp(self):
         return self.timestamp
 
 
-class EZGmailException(Exception):
-    pass
+    def downloadAttachment(self, filename, downloadFolder='.'):
+        if filename not in self.attachments.keys():
+            raise EZGmailException('No attachment named %s found among %s' % (filename, list(self.attachments.keys())))
+
+        attachmentObj = SERVICE.users().messages().attachments().get(id=self.attachments[filename]['id'], messageId=self.id, userId='me').execute()
+
+        attachmentData = base64.urlsafe_b64decode(attachmentObj['data']) # TODO figure out if UTF-8 is always the best encoding to pick here.
+
+        fo = open(os.path.join(downloadFolder, filename), 'wb')
+        fo.write(attachmentData)
+        fo.close()
+
+
+    def downloadAllAttachments(self, downloadFolder='.'):
+        for filename in self.attachments.keys():
+            self.downloadAttachment(filename, downloadFolder)
 
 
 def _parseContentTypeHeaderForEncoding(value):
@@ -354,6 +379,8 @@ def unread(maxResults=25, userId='me'):
 
 def summary(gmailObjects, printInfo=True):
     """Prints out a summary of the GmailThread or GmailMessage in the `gmailObjects` list, similar to the way """
+    if SERVICE is None: init()
+
     if isinstance(gmailObjects, (GmailThread, GmailMessage)):
         gmailObjects = [gmailObjects] # Make this uniformly in a list.
 
@@ -368,3 +395,38 @@ def summary(gmailObjects, printInfo=True):
         print('\n'.join(['%s - %s - %s' % text for text in summaryText]))
     else:
         return summaryText # Return the raw list of tuples info.
+
+def removeLabel(gmailObjects, label, userId='me'):
+    if SERVICE is None: init()
+
+    if isinstance(gmailObjects, (GmailThread, GmailMessage)):
+        gmailObjects = [gmailObjects] # Make this uniformly in a list.
+
+    removeUnreadLabelObj = {'removeLabelIds': [label], 'addLabelIds': []}
+    for obj in gmailObjects:
+        if isinstance(obj, GmailThread):
+            SERVICE.users().threads().modify(userId=userId, id=obj.id, body=removeUnreadLabelObj).execute()
+        elif isinstance(obj, GmailMessage):
+            SERVICE.users().messages().modify(userId=userId, id=obj.id, body=removeUnreadLabelObj).execute()
+
+def addLabel(gmailObjects, label, userId='me'):
+    if SERVICE is None: init()
+
+    if isinstance(gmailObjects, (GmailThread, GmailMessage)):
+        gmailObjects = [gmailObjects] # Make this uniformly in a list.
+
+    removeUnreadLabelObj = {'removeLabelIds': [], 'addLabelIds': [label]}
+    for obj in gmailObjects:
+        if isinstance(obj, GmailThread):
+            SERVICE.users().threads().modify(userId=userId, id=obj.id, body=removeUnreadLabelObj).execute()
+        elif isinstance(obj, GmailMessage):
+            SERVICE.users().messages().modify(userId=userId, id=obj.id, body=removeUnreadLabelObj).execute()
+
+
+def markAsRead(gmailObjects, userId='me'):
+    removeLabel(gmailObjects, 'UNREAD', userId)
+
+
+def markAsUnread(gmailObjects, userId='me'):
+    addLabel(gmailObjects, 'UNREAD', userId)
+

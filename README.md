@@ -108,6 +108,36 @@ More are described at https://support.google.com/mail/answer/7190?hl=en
 
 The ``search()``, ``recent()``, and ``unread()`` can also accept a ``maxResults`` keyword argument that is set to 25 by default. This sets an upper limit on how many threads/messages will be returned. API usage quotas are posted at https://developers.google.com/gmail/api/v1/reference/quota (roughly one million requests a day (and 25 per second) for the free tier).
 
+Accessing an email or thread doesn't mark it as unread automatically. You must do that yourself by passing a list of ``GmailThread`` or ``GmailMessage`` objects to ``markAsRead()``. (There is also a corresponding ``markAsUnread()`` function.)
+
+    >>> import ezgmail
+    >>> unreadThreads = ezgmail.unread()
+    >>> ezgmail.markAsRead(unreadThreads)
+
+These two functions make add/remove the ``'UNREAD'`` label using EZGmail's ``addLabel()`` and ``removeLabel()`` functions:
+
+    >>> import ezgmail
+    >>> unreadThreads = ezgmail.unread()
+    >>> ezgmail.removeLabel(unreadThreads, 'UNREAD') # Also marks threads as read.
+    >>> ezgmail.addLabel(unreadThreads, 'UNREAD') # Marks them as unread again.
+
+(Currently EZGmail doesn't have functions for adding/deleting/managing custom labels.)
+
+To view the attachments of an email, look at the ``GmailMessage`` object's ``attachments`` dictionary. The keys are the filenames of the attachments. You can either call the ``downloadAttachment()`` or ``downloadAllAttachments()`` methods:
+
+    >>> import ezgmail
+    >>> threads = ezgmail.search('See the attached files')
+    >>> threads[0].messages[0].attachments
+	>>> import pprint
+	>>> pprint.pprint(threads[0].messages[0].attachments)
+	{'a.png': {'id': 'ANGjdJ8eLDbjBpFTfvpuQ2HfR_iwp59XLUIl-IHW8eJcexMsxBYoPCZAXcX16rnqcbJZTknF5r3GmnM1W9n4vAE1oiVgUa4S4zBmNs7rd5PzFwLjO2vU3hp3_9SEZv-KBqVxi9nuNjarxhFqp3mxw6E5mqEYmFOYtT7Gx6CZbLaJuUox9GaWu-W9B4-XPDjwKkEfCdJ21FlOl-CsC6isZgD2Vh-ghh1haZN_2sifccznLv61ZW_KmqPKFcV1j7cXMQVqWU7bkgdH8do4Msc3QsG2ly_PNRid4-7gihsXaLI1ko_j3LSvsoLHFP3edhxh6YKQ2OdMhyZh5lqjmfT1TXgSo7hY16P_ScDO5MnWvmKscf_Hm5y5D4DHfwOq4--Otivoq2WVkVucVUJBkAoB',
+	           'size': 833609},
+	 'b.png': {'id': 'ANGjdJ_WYMmPmy2Dd2VBgvVoLAd1p3ARxGXKIzVfKqAiLhvKSBmEowYqFCdHbMJYlDZy4IWBGLg0eQCllMI0icqamM7vfMxBW2irJVogLM6SUT9cIcJFMSF7UhzU2I26bho086J7NjnX5u4kqYj_LHchowO56vTdKLRRsaJ2gfW0esz3cDFZzvthdR4wyBKEIeCJv7OJmFiaJIRf9f1KmFfKPLo9GZSyD2RMXdd6Qa2M3uN9pgT6sZ-OQx3e6aNDAKWh5GCeSiuIt_Z7GsDCdzVJjakMJx5FRFhp5zIck0p04AHnYhKfy1BipWmf7G-DAKzgJHAhFimBVUIBeFsHrqEGxDlevD7lK4ZBeb8cluSmYyEsRkSPSMYMlp-x1GVw25gqMnMVkGMKPfwj38iB',
+    	       'size': 335911}}
+	>>> threads[0].messages[0].downloadAttachment('a.png') # Download to current working directory.
+    >>> threads[0].messages[0].downloadAttachment('b.png', '/path/to/save/in')
+    >>> threads[0].messages[0].downloadAllAttachments() # Easier way to save all attachments.
+
 
 Limitations
 -----------
