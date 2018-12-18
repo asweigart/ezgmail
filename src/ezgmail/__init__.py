@@ -6,7 +6,7 @@ By Al Sweigart al@inventwithpython.com
 Note: Unless you know what you're doing, also use the default 'me' value for userId parameters in this module.
 '''
 
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
 
 import base64
@@ -113,7 +113,8 @@ class GmailMessage:
         self.snippet = messageObj['snippet']
         self.historyId = messageObj['historyId']
         self.timestamp = datetime.datetime.fromtimestamp(int(messageObj['internalDate']) // 1000)
-        self.attachments = {} # Keys are filename and values are {'id': attachment id as str, 'size': size as int}.
+        self.attachments = [] # Filenames of the attachments (can include duplicates). This exists so the user can know what attachments exist. Can include duplicate filenames.
+        self._attachmentsInfo = [] # List of dictionaries: {'filename': filename as str, id': attachment id as str, 'size': size in bytes as int}. This exists because there can be multple attachments with the same filename.
 
         # Find the headers for the sender, recipient, and subject
         for header in messageObj['payload']['headers']:
@@ -143,7 +144,8 @@ class GmailMessage:
                     # This only gets the attachment ID. The actual attachment must be downloaded with downloadAttachment().
                     attachmentId = part['body']['attachmentId']
                     attachmentSize = part['body']['size']
-                    self.attachments[part['filename']] = {'id': attachmentId, 'size': attachmentSize}
+                    self.attachments.append(part['filename'])
+                    self._attachmentsInfo.append({'filename': part['filename'], 'id': attachmentId, 'size': attachmentSize})
 
         elif 'body' in messageObj['payload'].keys():
             #for header in messageObj['payload']['headers']:
@@ -166,11 +168,17 @@ class GmailMessage:
         return self.timestamp
 
 
-    def downloadAttachment(self, filename, downloadFolder='.'):
-        if filename not in self.attachments.keys():
+    def downloadAttachment(self, filename, downloadFolder='.', duplicateIndex=0):
+        # NOTE: If there are multiple attachments with the same name, duplicateIndex needs to be passed to specify later ones.
+        if filename not in self.attachments:
             raise EZGmailException('No attachment named %s found among %s' % (filename, list(self.attachments.keys())))
 
-        attachmentObj = SERVICE.users().messages().attachments().get(id=self.attachments[filename]['id'], messageId=self.id, userId='me').execute()
+        try:
+            attachmentIndex = [i for i, v in enumerate(self.attachments) if v == filename][duplicateIndex] # Find the duplicateIndex-th entry with this filename in self.attachments.
+        except:
+            raise EZGmailException('There is no attachment named %s with duplicate index %s.' % (filename, duplicateIndex))
+
+        attachmentObj = SERVICE.users().messages().attachments().get(id=self._attachmentsInfo[attachmentIndex]['id'], messageId=self.id, userId='me').execute()
 
         attachmentData = base64.urlsafe_b64decode(attachmentObj['data']) # TODO figure out if UTF-8 is always the best encoding to pick here.
 
@@ -179,9 +187,27 @@ class GmailMessage:
         fo.close()
 
 
-    def downloadAllAttachments(self, downloadFolder='.'):
-        for filename in self.attachments.keys():
-            self.downloadAttachment(filename, downloadFolder)
+    def downloadAllAttachments(self, downloadFolder='.', overwrite=True):
+        if not overwrite:
+            attachmentFilenames = [a['filename'] for a in self._attachmentsInfo]
+            if len(attachmentFilenames) != len(set(attachmentFilenames)):
+                raise EZGmailException('There are duplicate filenames in this message\'s attachments. Pass overwrite=True to downloadAllAttachments() to download them anyway.')
+
+        downloadedAttachmentFilenames = []
+
+        for attachmentInfo in self._attachmentsInfo:
+            attachmentObj = SERVICE.users().messages().attachments().get(id=attachmentInfo['id'], messageId=self.id, userId='me').execute()
+
+            attachmentData = base64.urlsafe_b64decode(attachmentObj['data']) # TODO figure out if UTF-8 is always the best encoding to pick here.
+
+            downloadFilename = attachmentInfo['filename'] # TODO - in a future version, we can use different names to handle attachments with duplicate filenames.
+
+            fo = open(os.path.join(downloadFolder, downloadFilename), 'wb')
+            fo.write(attachmentData)
+            fo.close()
+
+            downloadedAttachmentFilenames.append(downloadFilename)
+        return downloadedAttachmentFilenames
 
 
 def _parseContentTypeHeaderForEncoding(value):
