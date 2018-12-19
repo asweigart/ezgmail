@@ -182,6 +182,12 @@ class GmailMessage:
 
         attachmentData = base64.urlsafe_b64decode(attachmentObj['data']) # TODO figure out if UTF-8 is always the best encoding to pick here.
 
+        # If downloadFolder is specified, make sure it exists and doesn't have a file by that name.
+        if not os.path.exists(downloadFolder):
+            os.makedirs(downloadFolder)
+        elif os.path.isfile(downloadFolder):
+            raise EZGmailException('%s is a file, not a folder' % downloadFolder)
+
         fo = open(os.path.join(downloadFolder, filename), 'wb')
         fo.write(attachmentData)
         fo.close()
@@ -194,6 +200,12 @@ class GmailMessage:
                 raise EZGmailException('There are duplicate filenames in this message\'s attachments. Pass overwrite=True to downloadAllAttachments() to download them anyway.')
 
         downloadedAttachmentFilenames = []
+
+        # If downloadFolder is specified, make sure it exists and doesn't have a file by that name.
+        if not os.path.exists(downloadFolder):
+            os.makedirs(downloadFolder)
+        elif os.path.isfile(downloadFolder):
+            raise EZGmailException('%s is a file, not a folder' % downloadFolder)
 
         for attachmentInfo in self._attachmentsInfo:
             attachmentObj = SERVICE.users().messages().attachments().get(id=attachmentInfo['id'], messageId=self.id, userId='me').execute()
