@@ -18,3 +18,16 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+About
+=====
+
+EZGmail is a Python module that makes it simple to use Gmail's API.
+
+Installation
+============
+
+pip install ezgmail
+
+You also
