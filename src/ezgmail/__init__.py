@@ -8,6 +8,22 @@ Note: Unless you know what you're doing, also use the default 'me' value for use
 
 __version__ = '0.0.4'
 
+"""
+NOTES FOR DEVELOPERS AND CONTRIBUTORS:
+I created this becaues the Gmail API and its documentation is less than ideal.
+EZGmail isn't meant to be comprehensive and do everything the Gmail API lets
+you do, it's meant to make the simple things simple: sending emails, checking
+emails, sending and downloading file attachments, etc. The ezgmail API needs
+to be dead simple, even at the expense of runtime efficiency. Error messages
+should be verbose and mention probable cause; they aren't just inscrutable
+phrases to look up on Stackoverflow.
+
+Users need a credentials.json file (downloadable from TODO), then call
+ezgmail.init(), which causes the gmail api
+
+
+"""
+
 
 import base64
 from email.mime.audio import MIMEAudio
