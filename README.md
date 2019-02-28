@@ -144,7 +144,6 @@ Limitations
 
 Currently, EZGmail cannot do the following:
 
-* Download attachments from emails.
 * Read or set labels. (Including marking emails as read.)
 * Sending emails with cc and bcc fields.
 * A lot of other basic features. This package is just a start!
