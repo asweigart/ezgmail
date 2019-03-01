@@ -6,7 +6,7 @@ By Al Sweigart al@inventwithpython.com
 Note: Unless you know what you're doing, also use the default 'me' value for userId parameters in this module.
 '''
 
-__version__ = '0.0.4'
+__version__ = '0.0.5'
 
 """
 NOTES FOR DEVELOPERS AND CONTRIBUTORS:
@@ -43,7 +43,7 @@ from oauth2client import file, client, tools
 
 #SCOPES = 'https://www.googleapis.com/auth/gmail.readonly' # read-only mode
 SCOPES = 'https://mail.google.com/' # read-write mode
-SERVICE = None
+SERVICE_GMAIL = None
 EMAIL_ADDRESS = None
 
 
@@ -73,7 +73,7 @@ class GmailThread:
             self._messages = []
 
             # The threadObj returned by the list() api doesn't include the messages list, so we need to call the get() api
-            self.extendedThreadObj = SERVICE.users().threads().get(userId='me', id=self.id).execute()
+            self.extendedThreadObj = SERVICE_GMAIL.users().threads().get(userId='me', id=self.id).execute()
 
             for msg in self.extendedThreadObj['messages']:
                 self._messages.append(GmailMessage(msg))
@@ -194,7 +194,7 @@ class GmailMessage:
         except:
             raise EZGmailException('There is no attachment named %s with duplicate index %s.' % (filename, duplicateIndex))
 
-        attachmentObj = SERVICE.users().messages().attachments().get(id=self._attachmentsInfo[attachmentIndex]['id'], messageId=self.id, userId='me').execute()
+        attachmentObj = SERVICE_GMAIL.users().messages().attachments().get(id=self._attachmentsInfo[attachmentIndex]['id'], messageId=self.id, userId='me').execute()
 
         attachmentData = base64.urlsafe_b64decode(attachmentObj['data']) # TODO figure out if UTF-8 is always the best encoding to pick here.
 
@@ -224,7 +224,7 @@ class GmailMessage:
             raise EZGmailException('%s is a file, not a folder' % downloadFolder)
 
         for attachmentInfo in self._attachmentsInfo:
-            attachmentObj = SERVICE.users().messages().attachments().get(id=attachmentInfo['id'], messageId=self.id, userId='me').execute()
+            attachmentObj = SERVICE_GMAIL.users().messages().attachments().get(id=attachmentInfo['id'], messageId=self.id, userId='me').execute()
 
             attachmentData = base64.urlsafe_b64decode(attachmentObj['data']) # TODO figure out if UTF-8 is always the best encoding to pick here.
 
@@ -248,27 +248,27 @@ def _parseContentTypeHeaderForEncoding(value):
     return emailEncoding
 
 
-def init(userId='me', tokenFile='token.json', credentialsFile='credentials.json'):
+def init(userId='me', tokenFile='token-gmail.json', credentialsFile='credentials.json'):
     """This function must be called before any other function in EZGmail (and is automatically called by them anyway, so you don't have to explicitly call this yourself).
 
-    This function populates the SERVICE global variable used in all Gmail API cals. It also populates EMAIL_ADDRESS with a string of the Gmail accont's email address. This
-    account is determined by the credentials.json file, downloaded from Google, and token.json. If the token.json file hasn't been generated yet, this function will open
+    This function populates the SERVICE_GMAIL global variable used in all Gmail API cals. It also populates EMAIL_ADDRESS with a string of the Gmail accont's email address. This
+    account is determined by the credentials.json file, downloaded from Google, and token-gmail.json. If the token-gmail.json file hasn't been generated yet, this function will open
     the browser to a page to let the user log in to the Gmail account that this module will use.
 
     If you want to switch to a different Gmail account, call this function again with a different `tokenFile` and `credentialsFile` arguments.
     """
-    global SERVICE, EMAIL_ADDRESS
+    global SERVICE_GMAIL, EMAIL_ADDRESS
 
     if not os.path.exists(credentialsFile):
-        raise EZGmailException('Can\'t find credentials file at %s. You can download this file from https://developers.google.com/gmail/api/quickstart/python and clicking "Enable the Gmail API"' % (os.path.abspath(credentialsFile)))
+        raise EZGmailException('Can\'t find credentials file at %s. You can download this file from https://developers.google.com/gmail/api/quickstart/python and clicking "Enable the Gmail API". Rename the downloaded file to credentials.json.' % (os.path.abspath(credentialsFile)))
 
     store = file.Storage(tokenFile)
     creds = store.get()
     if not creds or creds.invalid:
         flow = client.flow_from_clientsecrets(credentialsFile, SCOPES)
         creds = tools.run_flow(flow, store)
-    SERVICE = build('gmail', 'v1', http=creds.authorize(Http()))
-    EMAIL_ADDRESS = SERVICE.users().getProfile(userId=userId).execute()['emailAddress']
+    SERVICE_GMAIL = build('gmail', 'v1', http=creds.authorize(Http()))
+    EMAIL_ADDRESS = SERVICE_GMAIL.users().getProfile(userId=userId).execute()['emailAddress']
 
 
 def _createMessage(sender, recipient, subject, body, cc=None, bcc=None):
@@ -340,13 +340,13 @@ def _createMessageWithAttachments(sender, recipient, subject, body, attachments,
 
 def _sendMessage(message, userId='me'):
     """Sends an email based on the `message` object, which is returned by _createMessage() or _createMessageWithAttachments()."""
-    message = (SERVICE.users().messages().send(userId=userId, body=message).execute())
+    message = (SERVICE_GMAIL.users().messages().send(userId=userId, body=message).execute())
     return message
 
 
 def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=None):
     """Sends an email from the configured Gmail account."""
-    if SERVICE is None: init()
+    if SERVICE_GMAIL is None: init()
 
     if sender is None:
         sender = EMAIL_ADDRESS
@@ -370,9 +370,9 @@ def search(query, maxResults=25, userId='me'):
 
     More are described at https://support.google.com/mail/answer/7190?hl=en
     """
-    if SERVICE is None: init()
+    if SERVICE_GMAIL is None: init()
 
-    response = SERVICE.users().threads().list(userId=userId, q=query, maxResults=maxResults).execute()
+    response = SERVICE_GMAIL.users().threads().list(userId=userId, q=query, maxResults=maxResults).execute()
     gmailThreads = []
     if 'threads' in response:
         gmailThreads.extend(response['threads'])
@@ -380,7 +380,7 @@ def search(query, maxResults=25, userId='me'):
     """
     while 'nextPageToken' in response:
       page_token = response['nextPageToken']
-      response = SERVICE.users().threads().list(userId=userId, q=query
+      response = SERVICE_GMAIL.users().threads().list(userId=userId, q=query
                                         pageToken=page_token).execute()
       gmailThreads.extend(response['threads'])
     """
@@ -389,9 +389,9 @@ def search(query, maxResults=25, userId='me'):
 '''
 def searchMessages(query, maxResults=25, userId='me'):
     """Same as search(), except it returns a list of GmailMessage objects instead of GmailThread. You probably want to use search() instea dof this function."""
-    if SERVICE is None: init()
+    if SERVICE_GMAIL is None: init()
 
-    response = SERVICE.users().messages().list(userId=userId, q=query, maxResults=maxResults).execute()
+    response = SERVICE_GMAIL.users().messages().list(userId=userId, q=query, maxResults=maxResults).execute()
     messages = []
     if 'messages' in response:
       messages.extend(response['messages'])
@@ -399,17 +399,17 @@ def searchMessages(query, maxResults=25, userId='me'):
     """
     while 'nextPageToken' in response:
       page_token = response['nextPageToken']
-      response = SERVICE.users().messages().list(userId=userId, q=query,
+      response = SERVICE_GMAIL.users().messages().list(userId=userId, q=query,
                                          pageToken=page_token).execute()
       messages.extend(response['messages'])
     """
 
-    return [GmailMessage(SERVICE.users().messages().get(userId=userId, id=message['id']).execute()) for message in messages]
+    return [GmailMessage(SERVICE_GMAIL.users().messages().get(userId=userId, id=message['id']).execute()) for message in messages]
 
 
 def getMessage(query, userId='me'):
     """Return a GmailMessage object of the first search result for `query`. Essentially a wrapper for search()."""
-    if SERVICE is None: init()
+    if SERVICE_GMAIL is None: init()
 
     messages = searchMessages(query, 1, userId)
     if messages == []:
@@ -433,7 +433,7 @@ def unread(maxResults=25, userId='me'):
 
 def summary(gmailObjects, printInfo=True):
     """Prints out a summary of the GmailThread or GmailMessage in the `gmailObjects` list, similar to the way """
-    if SERVICE is None: init()
+    if SERVICE_GMAIL is None: init()
 
     if isinstance(gmailObjects, (GmailThread, GmailMessage)):
         gmailObjects = [gmailObjects] # Make this uniformly in a list.
@@ -451,7 +451,7 @@ def summary(gmailObjects, printInfo=True):
         return summaryText # Return the raw list of tuples info.
 
 def removeLabel(gmailObjects, label, userId='me'):
-    if SERVICE is None: init()
+    if SERVICE_GMAIL is None: init()
 
     if isinstance(gmailObjects, (GmailThread, GmailMessage)):
         gmailObjects = [gmailObjects] # Make this uniformly in a list.
@@ -459,12 +459,12 @@ def removeLabel(gmailObjects, label, userId='me'):
     removeUnreadLabelObj = {'removeLabelIds': [label], 'addLabelIds': []}
     for obj in gmailObjects:
         if isinstance(obj, GmailThread):
-            SERVICE.users().threads().modify(userId=userId, id=obj.id, body=removeUnreadLabelObj).execute()
+            SERVICE_GMAIL.users().threads().modify(userId=userId, id=obj.id, body=removeUnreadLabelObj).execute()
         elif isinstance(obj, GmailMessage):
-            SERVICE.users().messages().modify(userId=userId, id=obj.id, body=removeUnreadLabelObj).execute()
+            SERVICE_GMAIL.users().messages().modify(userId=userId, id=obj.id, body=removeUnreadLabelObj).execute()
 
 def addLabel(gmailObjects, label, userId='me'):
-    if SERVICE is None: init()
+    if SERVICE_GMAIL is None: init()
 
     if isinstance(gmailObjects, (GmailThread, GmailMessage)):
         gmailObjects = [gmailObjects] # Make this uniformly in a list.
@@ -472,9 +472,9 @@ def addLabel(gmailObjects, label, userId='me'):
     removeUnreadLabelObj = {'removeLabelIds': [], 'addLabelIds': [label]}
     for obj in gmailObjects:
         if isinstance(obj, GmailThread):
-            SERVICE.users().threads().modify(userId=userId, id=obj.id, body=removeUnreadLabelObj).execute()
+            SERVICE_GMAIL.users().threads().modify(userId=userId, id=obj.id, body=removeUnreadLabelObj).execute()
         elif isinstance(obj, GmailMessage):
-            SERVICE.users().messages().modify(userId=userId, id=obj.id, body=removeUnreadLabelObj).execute()
+            SERVICE_GMAIL.users().messages().modify(userId=userId, id=obj.id, body=removeUnreadLabelObj).execute()
 
 
 def markAsRead(gmailObjects, userId='me'):
@@ -483,4 +483,3 @@ def markAsRead(gmailObjects, userId='me'):
 
 def markAsUnread(gmailObjects, userId='me'):
     addLabel(gmailObjects, 'UNREAD', userId)
-

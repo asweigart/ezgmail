@@ -14,9 +14,9 @@ To install with pip, run:
 
     pip install ezgmail
 
-You will need to download a *credentials.json* file by going to https://developers.google.com/gmail/api/quickstart/python and clicking the **Enable the Gmail API** button (after logging in to your Gmail account).
+You will need to download a *credentials-gmail.json* file by going to https://developers.google.com/gmail/api/quickstart/python and clicking the **Enable the Gmail API** button (after logging in to your Gmail account). You will need to rename the downloaded *credentials.json* file to *credentials-gmail.json*.
 
-Once you have the *credentials.json* file, the first time you call ``ezgmail.init()`` it will bring up a window asking you to log in to your Gmail account and allow "Quickstart" to access it. A *token.json* file will be generated which your script can use to access your account.
+Once you have the *credentials-gmail.json* file, the first time you run ``import ezgmail`` it will bring up a window asking you to log in to your Gmail account and allow "Quickstart" to access it. A *token-gmail.json* file will be generated which your script can use to access your account.
 
 Future calls to ``ezgmail.init()`` or any other ``ezgmail`` function won't require this token-generating step. The ``gmail.init()`` function is automatically called when any other ``ezgmail`` function is called.
 
@@ -24,10 +24,9 @@ Future calls to ``ezgmail.init()`` or any other ``ezgmail`` function won't requi
 Quickstart Guide
 ----------------
 
-To see what email address you are sending from, examine ``ezgmail.EMAIL_ADDRESS`` (this is configured by the *token.json* file you're using, and you must first call ``ezgmail.init()`` or some other ``ezgmail`` function first):
+After you've downloaded a *credentials-gmail.json* and *token-gmail.json* file, you can import EZGmail with ``import ezgmail``. To see what email address you are sending from, examine ``ezgmail.EMAIL_ADDRESS`` (this is configured by the *token-gmail.json* file you're using, and you must first call ``ezgmail.init()`` or some other ``ezgmail`` function first):
 
     >>> import ezgmail
-    >>> ezgmail.init()
     >>> ezgmail.EMAIL_ADDRESS
     'example@gmail.com'
 
