@@ -248,7 +248,7 @@ def _parseContentTypeHeaderForEncoding(value):
     return emailEncoding
 
 
-def init(userId='me', tokenFile='token-gmail.json', credentialsFile='credentials.json'):
+def init(userId='me', tokenFile='token-gmail.json', credentialsFile='credentials.json', _raiseException=True):
     """This function must be called before any other function in EZGmail (and is automatically called by them anyway, so you don't have to explicitly call this yourself).
 
     This function populates the SERVICE_GMAIL global variable used in all Gmail API cals. It also populates EMAIL_ADDRESS with a string of the Gmail accont's email address. This
@@ -257,18 +257,29 @@ def init(userId='me', tokenFile='token-gmail.json', credentialsFile='credentials
 
     If you want to switch to a different Gmail account, call this function again with a different `tokenFile` and `credentialsFile` arguments.
     """
-    global SERVICE_GMAIL, EMAIL_ADDRESS
+    global SERVICE_GMAIL, EMAIL_ADDRESS, IS_INITIALIZED
 
-    if not os.path.exists(credentialsFile):
-        raise EZGmailException('Can\'t find credentials file at %s. You can download this file from https://developers.google.com/gmail/api/quickstart/python and clicking "Enable the Gmail API". Rename the downloaded file to credentials.json.' % (os.path.abspath(credentialsFile)))
+    IS_INITIALIZED = False # Set this to False, in case module was initialized before but this current initialization fails.
 
-    store = file.Storage(tokenFile)
-    creds = store.get()
-    if not creds or creds.invalid:
-        flow = client.flow_from_clientsecrets(credentialsFile, SCOPES)
-        creds = tools.run_flow(flow, store)
-    SERVICE_GMAIL = build('gmail', 'v1', http=creds.authorize(Http()))
-    EMAIL_ADDRESS = SERVICE_GMAIL.users().getProfile(userId=userId).execute()['emailAddress']
+    try:
+        if not os.path.exists(credentialsFile):
+            raise EZGmailException('Can\'t find credentials file at %s. You can download this file from https://developers.google.com/gmail/api/quickstart/python and clicking "Enable the Gmail API". Rename the downloaded file to credentials.json.' % (os.path.abspath(credentialsFile)))
+
+        store = file.Storage(tokenFile)
+        creds = store.get()
+        if not creds or creds.invalid:
+            flow = client.flow_from_clientsecrets(credentialsFile, SCOPES)
+            creds = tools.run_flow(flow, store)
+        SERVICE_GMAIL = build('gmail', 'v1', http=creds.authorize(Http()))
+        EMAIL_ADDRESS = SERVICE_GMAIL.users().getProfile(userId=userId).execute()['emailAddress']
+
+        IS_INITIALIZED = True
+        return IS_INITIALIZED
+    except:
+        if _raiseException:
+            raise
+        else:
+            return False
 
 
 def _createMessage(sender, recipient, subject, body, cc=None, bcc=None):
@@ -483,3 +494,6 @@ def markAsRead(gmailObjects, userId='me'):
 
 def markAsUnread(gmailObjects, userId='me'):
     addLabel(gmailObjects, 'UNREAD', userId)
+
+
+init(_raiseException=False)
