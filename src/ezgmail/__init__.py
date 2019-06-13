@@ -147,7 +147,10 @@ class GmailMessage:
         # Find the plaintext email part, get the encoding, and use it to get the email body.
         if 'parts' in messageObj['payload'].keys():
             for part in messageObj['payload']['parts']:
-                if part['mimeType'].upper() == 'TEXT/PLAIN':
+                if part['mimeType'].upper() == 'TEXT/PLAIN' and 'data' in part['body']:
+                    # The plain text email will have a part['body']['data'], while attachments
+                    # lack this key and instead have part['body']['attachmentId'].
+
                     # This is the plain text email we're looking for. Now find the encoding and the body.
                     for header in part['headers']:
                         if header['name'].upper() == 'CONTENT-TYPE':
