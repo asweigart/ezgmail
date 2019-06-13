@@ -6,7 +6,7 @@ By Al Sweigart al@inventwithpython.com
 Note: Unless you know what you're doing, also use the default 'me' value for userId parameters in this module.
 '''
 
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 
 """
 NOTES FOR DEVELOPERS AND CONTRIBUTORS:
