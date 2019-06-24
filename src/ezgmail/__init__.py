@@ -18,7 +18,7 @@ to be dead simple, even at the expense of runtime efficiency. Error messages
 should be verbose and mention probable cause; they aren't just inscrutable
 phrases to look up on Stackoverflow.
 
-Users need a credentials.json file (downloadable from TODO), then call
+Users need a credentials-gmail.json file (downloadable from TODO), then call
 ezgmail.init(), which causes the gmail api
 
 
@@ -99,6 +99,18 @@ class GmailThread:
     def latestTimestamp(self):
         return self.messages[-1].timestamp
 
+
+    def addLabel(self, label):
+        addLabel(self, label) # The global addLabel() function implements this feature.
+
+    def removeLabel(self, label):
+        removeLabel(self, label) # The global removeLabel() function implements this feature.
+
+    def markAsRead(self):
+        markAsRead(self)
+
+    def markAsUnread(self):
+        markAsUnread(self)
 
 
 def removeQuotedParts(emailText):
@@ -240,6 +252,18 @@ class GmailMessage:
             downloadedAttachmentFilenames.append(downloadFilename)
         return downloadedAttachmentFilenames
 
+    def addLabel(self, label):
+        addLabel(self, label) # The global addLabel() function implements this feature.
+
+    def removeLabel(self, label):
+        removeLabel(self, label) # The global removeLabel() function implements this feature.
+
+    def markAsRead(self):
+        markAsRead(self)
+
+    def markAsUnread(self):
+        markAsUnread(self)
+
 
 def _parseContentTypeHeaderForEncoding(value):
     """Helper function called by GmailMessage:__init__()."""
@@ -251,11 +275,11 @@ def _parseContentTypeHeaderForEncoding(value):
     return emailEncoding
 
 
-def init(userId='me', tokenFile='token-gmail.json', credentialsFile='credentials.json', _raiseException=True):
+def init(userId='me', tokenFile='token-gmail.json', credentialsFile='credentials-gmail.json', _raiseException=True):
     """This function must be called before any other function in EZGmail (and is automatically called by them anyway, so you don't have to explicitly call this yourself).
 
     This function populates the SERVICE_GMAIL global variable used in all Gmail API cals. It also populates EMAIL_ADDRESS with a string of the Gmail accont's email address. This
-    account is determined by the credentials.json file, downloaded from Google, and token-gmail.json. If the token-gmail.json file hasn't been generated yet, this function will open
+    account is determined by the credentials-gmail.json file, downloaded from Google, and token-gmail.json. If the token-gmail.json file hasn't been generated yet, this function will open
     the browser to a page to let the user log in to the Gmail account that this module will use.
 
     If you want to switch to a different Gmail account, call this function again with a different `tokenFile` and `credentialsFile` arguments.
@@ -266,7 +290,7 @@ def init(userId='me', tokenFile='token-gmail.json', credentialsFile='credentials
 
     try:
         if not os.path.exists(credentialsFile):
-            raise EZGmailException('Can\'t find credentials file at %s. You can download this file from https://developers.google.com/gmail/api/quickstart/python and clicking "Enable the Gmail API". Rename the downloaded file to credentials.json.' % (os.path.abspath(credentialsFile)))
+            raise EZGmailException('Can\'t find credentials file at %s. You can download this file from https://developers.google.com/gmail/api/quickstart/python and clicking "Enable the Gmail API". Rename the downloaded file to credentials-gmail.json.' % (os.path.abspath(credentialsFile)))
 
         store = file.Storage(tokenFile)
         creds = store.get()

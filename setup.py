@@ -16,7 +16,7 @@ setup(
     url='https://github.com/asweigart/ezgmail',
     author='Al Sweigart',
     author_email='al@inventwithpython.com',
-    description=('''A Pythonic interface to the Gmail API that actually works as of Dec 2018.'''),
+    description=('''A Pythonic interface to the Gmail API that actually works as of June 2019.'''),
     long_description=long_description,
     long_description_content_type="text/markdown",
     license='GPLv3+',

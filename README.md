@@ -107,11 +107,14 @@ More are described at https://support.google.com/mail/answer/7190?hl=en
 
 The ``search()``, ``recent()``, and ``unread()`` can also accept a ``maxResults`` keyword argument that is set to 25 by default. This sets an upper limit on how many threads/messages will be returned. API usage quotas are posted at https://developers.google.com/gmail/api/v1/reference/quota (roughly one million requests a day (and 25 per second) for the free tier).
 
-Accessing an email or thread doesn't mark it as unread automatically. You must do that yourself by passing a list of ``GmailThread`` or ``GmailMessage`` objects to ``markAsRead()``. (There is also a corresponding ``markAsUnread()`` function.)
+Accessing an email or thread doesn't mark it as unread automatically. You must do that yourself by calling the ``markAsRead()`` method of the ``GmailThread`` or ``GmailMessage`` object. (There is also a corresponding ``markAsUnread()`` function.) You can also call ``ezgmail.markAsRead()`` and pass it a list of ``GmailThread`` or ``GmailMessage`` objects.
 
     >>> import ezgmail
     >>> unreadThreads = ezgmail.unread()
-    >>> ezgmail.markAsRead(unreadThreads)
+    >>> ezgmail.markAsRead(unreadThreads) # Marks all the GmailThread objects in the unreadThreads list as read.
+    >>> # Or you can do:
+    >>> for unreadThread in unreadThreads:
+    ...     unreadThread.markAsRead() # Mark the individual GmailThread objects as read.
 
 These two functions make add/remove the ``'UNREAD'`` label using EZGmail's ``addLabel()`` and ``removeLabel()`` functions:
 
@@ -119,6 +122,9 @@ These two functions make add/remove the ``'UNREAD'`` label using EZGmail's ``add
     >>> unreadThreads = ezgmail.unread()
     >>> ezgmail.removeLabel(unreadThreads, 'UNREAD') # Also marks threads as read.
     >>> ezgmail.addLabel(unreadThreads, 'UNREAD') # Marks them as unread again.
+    >>> # Or you can do:
+    >>> for unreadThread in unreadThreads:
+    ...     unreadThread.removeLabel(unreadThreads, 'UNREAD') # Mark the individual GmailThread objects as read.
 
 (Currently EZGmail doesn't have functions for adding/deleting/managing custom labels.)
 
