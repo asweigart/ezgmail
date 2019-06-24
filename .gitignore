@@ -101,3 +101,6 @@ python_boilerplate/
 token.pickle
 token-gmail.json
 credentials.json
+credentials-gmail.json
+*.json
+*.pickle
