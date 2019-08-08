@@ -285,7 +285,7 @@ def init(userId='me', tokenFile='token-gmail.json', credentialsFile='credentials
             return False
 
 
-def _createMessage(sender, recipient, subject, body, cc=None, bcc=None):
+def _createMessage(sender, recipient, subject, body, threadId=None, cc=None, bcc=None):
     """Creates a MIMEText object and returns it as a base64 encoded string in a {'raw': b64_MIMEText_object} dictionary, suitable for use by _sendMessage() and the
     users.messages.send()."""
     message = MIMEText(body, 'plain')
@@ -296,10 +296,14 @@ def _createMessage(sender, recipient, subject, body, cc=None, bcc=None):
         message['cc'] = cc
     if bcc is not None:
         message['bcc'] = bcc
+        
+    if threadId:
+        return {'raw': base64.urlsafe_b64encode(message.as_bytes()).decode('ascii'), 'threadId': threadId}
+
     return {'raw': base64.urlsafe_b64encode(message.as_bytes()).decode('ascii')}
 
 
-def _createMessageWithAttachments(sender, recipient, subject, body, attachments, cc=None, bcc=None):
+def _createMessageWithAttachments(sender, recipient, subject, body, attachments, threadId=None, cc=None, bcc=None):
     """Creates a MIMEText object and returns it as a base64 encoded string in a {'raw': b64_MIMEText_object} dictionary, suitable for use by _sendMessage() and the
     users.messages.send(). File attachments can also be added to this message.
 
@@ -349,6 +353,9 @@ def _createMessageWithAttachments(sender, recipient, subject, body, attachments,
         mimePart.add_header('Content-Disposition', 'attachment', filename=filename)
         message.attach(mimePart)
 
+    if threadId:
+        return {'raw': base64.urlsafe_b64encode(message.as_bytes()).decode('ascii'), 'threadId': threadId}
+    
     return {'raw': base64.urlsafe_b64encode(message.as_bytes()).decode('ascii')}
 
 
@@ -358,7 +365,7 @@ def _sendMessage(message, userId='me'):
     return message
 
 
-def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=None):
+def send(recipient, subject, body, threadId=None, attachments=None, sender=None, cc=None, bcc=None):
     """Sends an email from the configured Gmail account."""
     if SERVICE_GMAIL is None: init()
 
@@ -366,9 +373,9 @@ def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=N
         sender = EMAIL_ADDRESS
 
     if attachments is None:
-        msg = _createMessage(sender, recipient, subject, body, cc, bcc)
+        msg = _createMessage(sender, recipient, subject, body, threadId, cc, bcc)
     else:
-        msg = _createMessageWithAttachments(sender, recipient, subject, body, attachments, cc, bcc)
+        msg = _createMessageWithAttachments(sender, recipient, subject, body, attachments, threadId, cc, bcc)
     _sendMessage(msg)
 
 
