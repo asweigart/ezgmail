@@ -33,6 +33,7 @@ Temporary Items
 # Distribution / packaging
 .Python
 env/
+venv/
 build/
 develop-eggs/
 dist/
@@ -104,4 +105,3 @@ credentials.json
 credentials-gmail.json
 *.json
 *.pickle
-venv/
