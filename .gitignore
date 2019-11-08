@@ -104,3 +104,4 @@ credentials.json
 credentials-gmail.json
 *.json
 *.pickle
+venv/
