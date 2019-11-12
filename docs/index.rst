@@ -5,7 +5,7 @@ Welcome to EZGmail's documentation!
 About
 =====
 
-EZGmail is a Python module that makes it simple to use Gmail's API.
+A Pythonic interface to the Gmail API that actually works as of November 2019.
 
 Installation
 ============
