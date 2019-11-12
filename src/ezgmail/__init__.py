@@ -52,11 +52,14 @@ EMAIL_ADDRESS = False # False if not logged in, otherwise the string of the emai
 LOGGED_IN = False # False if not logged in, otherwise True
 
 class EZGmailException(Exception):
-    pass # This class exists for this module to raise for EZGmail-specific problems.
+    """The base class for all EZGmail-specific problems. If the `ezgmail` module raises something that isn't this or
+    a subclass of this exception, you can assume it is caused by a bug in EZGmail."""
+    pass
 
 
 class GmailThread:
-    '''Represents a thread of Gmail messages. These objects are returned by the users.threads.get() API call. They contain references to a list of GmailMessage objects.'''
+    """Represents a thread of Gmail messages. These objects are returned by the users.threads.get() API call. They
+    contain references to a list of GmailMessage objects."""
     def __init__(self, threadObj):
         self.threadObj = copy.deepcopy(threadObj)
         self.id = threadObj['id']
