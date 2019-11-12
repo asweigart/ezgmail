@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.abspath('../src'))
 # -- Project information -----------------------------------------------------
 
 project = 'EZGmail'
-copyright = '2018, Al Sweigart'
+copyright = '2018-2019, Al Sweigart'
 author = 'Al Sweigart'
 
 # The short X.Y version

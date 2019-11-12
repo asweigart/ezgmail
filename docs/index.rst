@@ -60,7 +60,7 @@ If you'd like to log in as a different user (based on different *credentials.jso
 At this point, the ``EMAIL_ADDRESS`` global variable will contain a string of the logged in user, and ``LOGGED_IN`` is
 set to ``True``. (Otherwise, they are set to ``None`` and ``False``, respectively.)
 
-.. code-block::
+.. code-block:: none
 
     >>> ezgmail.EMAIL_ADDRESS
     'test.sweigart@gmail.com'
@@ -75,7 +75,7 @@ To get a list of all the email threads of unread emails, call ``ezgmail.unread()
 ``GmailThread`` objects. Each ``GmailThread`` contains a ``messages`` attribute which is a list of ``GmailMessage``
 objects. Each ``GmailMessage`` object has attributes ``sender``, ``timestamp``, ``subject``, ``body``:
 
-.. code-block::
+.. code-block:: none
 
     >>> ezgmail.unread()
     [<GmailThread len=4 snippet='Quickstart was granted access to your Google Account test.sweigart@gmail.com If you did not grant access, you should check this activity and secure your account. Check activity You received this email'>]
