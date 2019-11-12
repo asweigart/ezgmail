@@ -6,7 +6,17 @@ A Pythonic interface to the Gmail API that actually works as of November 2019.
 Installation
 ------------
 
-``pip install ezgmail``
+EZGmail can be installed from PyPI using `pip`:
+
+    ``pip install ezgmail``
+
+On macOS and Linux, installing EZGmail for Python 3 is done with `pip3`:
+
+    ``pip3 install ezgmail``
+
+If you run into permissions errors, try installing with the `--user` option:
+
+    ``pip install --user ezgmail``
 
 You must also sign up for a Gmail account at https://gmail.com/. Then, go to
 https://developers.google.com/gmail/api/quickstart/python/, click the **Enable the Gmail API** button on that page,
@@ -105,7 +115,7 @@ operatives for it too:
 
 More search operatives are described at https://support.google.com/mail/answer/7190?hl=en
 
-The API contains complete documentation.
+The API section contains complete documentation.
 
 API
 ---
