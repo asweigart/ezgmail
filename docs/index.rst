@@ -1,14 +1,10 @@
-Welcome to EZGmail's documentation!
-=======================================
-
-
-About
-=====
+EZGmail
+=======
 
 A Pythonic interface to the Gmail API that actually works as of November 2019.
 
 Installation
-============
+------------
 
 ``pip install ezgmail``
 
@@ -40,7 +36,7 @@ without requiring you to include your Gmail password in your source code.
 
 
 Quickstart
-==========
+----------
 
 To log in to your Gmail account, simple import EZGmail after setting up the *credentials.json* and *token.json* files:
 
@@ -112,17 +108,8 @@ More search operatives are described at https://support.google.com/mail/answer/7
 The API contains complete documentation.
 
 API
-===
+---
 
 .. automodule:: ezgmail
     :members:
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
 
