@@ -6,7 +6,7 @@ By Al Sweigart al@inventwithpython.com
 Note: Unless you know what you're doing, also use the default 'me' value for userId parameters in this module.
 '''
 
-__version__ = '0.0.6'
+__version__ = '0.0.8'
 
 """
 NOTES FOR DEVELOPERS AND CONTRIBUTORS:
@@ -18,7 +18,11 @@ to be dead simple, even at the expense of runtime efficiency. Error messages
 should be verbose and mention probable cause; they aren't just inscrutable
 phrases to look up on Stackoverflow.
 
-Users need a credentials-gmail.json file (downloadable from TODO), then call
+Users can only be logged in as a single user at a time. This is by design to
+keep things simple. If you need to handle multiple logged in accounts,
+you should probably use the Gmail API directly.
+
+Users need a credentials.json file (downloadable from TODO), then call
 ezgmail.init(), which causes the gmail api
 
 
@@ -44,8 +48,8 @@ from oauth2client import file, client, tools
 #SCOPES = 'https://www.googleapis.com/auth/gmail.readonly' # read-only mode
 SCOPES = 'https://mail.google.com/' # read-write mode
 SERVICE_GMAIL = None
-EMAIL_ADDRESS = None
-
+EMAIL_ADDRESS = False # False if not logged in, otherwise the string of the email address of the logged in user.
+LOGGED_IN = False # False if not logged in, otherwise True
 
 class EZGmailException(Exception):
     pass # This class exists for this module to raise for EZGmail-specific problems.
@@ -137,6 +141,7 @@ class GmailMessage:
         self.messageObj = copy.deepcopy(messageObj) # TODO should we make a copy of this to prevent further modification? Sure.
         self.id = messageObj['id']
         self.threadId = messageObj['threadId']
+        self.body = None
 
         self.snippet = messageObj['snippet']
         self.historyId = messageObj['historyId']
@@ -171,13 +176,27 @@ class GmailMessage:
                     # `originalBody` has the full body of the email, while the more useful `body` only has everything up until the quoted reply part.
                     self.originalBody = base64.urlsafe_b64decode(part['body']['data']).decode(emailEncoding)
                     self.body = removeQuotedParts(self.originalBody)
+
+                if part['mimeType'].upper() == 'MULTIPART/ALTERNATIVE':
+                    # Emails with attachments can have the body of the email in a 'multipart/alternative' area of the dictionary.
+                    # There is a recursive-looking structure here, where `part` has it's own 'parts' list.
+                    for multipartPart in part['parts']:
+                        if multipartPart['mimeType'].upper() == 'TEXT/PLAIN' and 'data' in multipartPart['body']:
+                            # Find the encoding and the body.
+                            for header in multipartPart['headers']:
+                                if header['name'].upper() == 'CONTENT-TYPE':
+                                    emailEncoding = _parseContentTypeHeaderForEncoding(header['value'])
+
+                            # `originalBody` has the full body of the email, while the more useful `body` only has everything up until the quoted reply part.
+                            self.originalBody = base64.urlsafe_b64decode(multipartPart['body']['data']).decode(emailEncoding)
+                            self.body = removeQuotedParts(self.originalBody)
+
                 if 'filename' in part.keys() and part['filename'] != '':
                     # This only gets the attachment ID. The actual attachment must be downloaded with downloadAttachment().
                     attachmentId = part['body']['attachmentId']
                     attachmentSize = part['body']['size']
                     self.attachments.append(part['filename'])
                     self._attachmentsInfo.append({'filename': part['filename'], 'id': attachmentId, 'size': attachmentSize})
-
         elif 'body' in messageObj['payload'].keys():
             #for header in messageObj['payload']['headers']:
             #    if header['name'].upper() == 'CONTENT-TYPE':
@@ -185,7 +204,13 @@ class GmailMessage:
             self.originalBody = base64.urlsafe_b64decode(messageObj['payload']['body']['data']).decode(emailEncoding)
             self.body = removeQuotedParts(self.originalBody)
 
-        # TODO - Future features include labels and attachments.
+
+        #assert self.body is not None # Note: There's still a chance that body could have not been set.
+        # TODO: what if there's only an HTML email and not plain text email?
+
+
+
+        # TODO - Future features include labels.
 
     def __str__(self):
         return '<GmailMessage from=%r to=%r timestamp=%r subject=%r snippet=%r>' % (self.sender, self.recipient, self.timestamp, self.subject, self.snippet)
@@ -275,22 +300,23 @@ def _parseContentTypeHeaderForEncoding(value):
     return emailEncoding
 
 
-def init(userId='me', tokenFile='token-gmail.json', credentialsFile='credentials-gmail.json', _raiseException=True):
+def init(userId='me', tokenFile='token.json', credentialsFile='credentials.json', _raiseException=True):
     """This function must be called before any other function in EZGmail (and is automatically called by them anyway, so you don't have to explicitly call this yourself).
 
     This function populates the SERVICE_GMAIL global variable used in all Gmail API cals. It also populates EMAIL_ADDRESS with a string of the Gmail accont's email address. This
-    account is determined by the credentials-gmail.json file, downloaded from Google, and token-gmail.json. If the token-gmail.json file hasn't been generated yet, this function will open
+    account is determined by the credentials.json file, downloaded from Google, and token.json. If the tokenFile file hasn't been generated yet, this function will open
     the browser to a page to let the user log in to the Gmail account that this module will use.
 
     If you want to switch to a different Gmail account, call this function again with a different `tokenFile` and `credentialsFile` arguments.
     """
-    global SERVICE_GMAIL, EMAIL_ADDRESS, IS_INITIALIZED
+    global SERVICE_GMAIL, EMAIL_ADDRESS, LOGGED_IN
 
-    IS_INITIALIZED = False # Set this to False, in case module was initialized before but this current initialization fails.
+    EMAIL_ADDRESS = False # Set this to False, in case module was initialized before but this current initialization fails.
+    LOGGED_IN = False
 
     try:
         if not os.path.exists(credentialsFile):
-            raise EZGmailException('Can\'t find credentials file at %s. You can download this file from https://developers.google.com/gmail/api/quickstart/python and clicking "Enable the Gmail API". Rename the downloaded file to credentials-gmail.json.' % (os.path.abspath(credentialsFile)))
+            raise EZGmailException('Can\'t find credentials file at %s. You can download this file from https://developers.google.com/gmail/api/quickstart/python and clicking "Enable the Gmail API". Rename the downloaded file to credentials.json.' % (os.path.abspath(credentialsFile)))
 
         store = file.Storage(tokenFile)
         creds = store.get()
@@ -299,9 +325,9 @@ def init(userId='me', tokenFile='token-gmail.json', credentialsFile='credentials
             creds = tools.run_flow(flow, store)
         SERVICE_GMAIL = build('gmail', 'v1', http=creds.authorize(Http()))
         EMAIL_ADDRESS = SERVICE_GMAIL.users().getProfile(userId=userId).execute()['emailAddress']
+        LOGGED_IN = bool(EMAIL_ADDRESS)
 
-        IS_INITIALIZED = True
-        return IS_INITIALIZED
+        return EMAIL_ADDRESS
     except:
         if _raiseException:
             raise
