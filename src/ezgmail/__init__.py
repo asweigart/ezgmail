@@ -53,7 +53,7 @@ LOGGED_IN = False  # False if not logged in, otherwise True
 
 
 class EZGmailException(Exception):
-    """The base class for all EZGmail-specific problems. If the `ezgmail` module raises something that isn't this or
+    """The base class for all EZGmail-specific problems. If the ``ezgmail`` module raises something that isn't this or
     a subclass of this exception, you can assume it is caused by a bug in EZGmail."""
 
     pass
@@ -72,11 +72,14 @@ class GmailThread:
 
     @property
     def text(self):
+        """A list of strings, where each string is the message of a single email in this thread of emails, starting
+        from the oldest at index 0 to the most recent."""
         return [msg.body for msg in self.messages]
 
     @property
     def messages(self):
-        """The GmailMessage objects of the emails in this thread, starting from most recent."""
+        """The GmailMessage objects of the emails in this thread, starting from the oldest at index 0 to the most
+        recent."""
         if self._messages is None:
             self._messages = []
 
@@ -89,10 +92,13 @@ class GmailThread:
         return self._messages
 
     def __str__(self):
-        return "<GmailThread len=%r snippet=%r>" % (len(self.messages), self.snippet)
+        return self.__repr__()
+
+    def __repr__(self):
+        return "<GmailThread numMessages=%r snippet=%r>" % (len(self.messages), self.snippet)
 
     def senders(self):
-        """Returns a list of strings of the senders in this thread, from oldest to most recent."""
+        """Returns a list of strings of the senders in this thread, from the oldest at index 0 to the most recent."""
         senderEmails = []
         for msg in self.messages:
             if msg.sender == EMAIL_ADDRESS:
@@ -102,23 +108,31 @@ class GmailThread:
         return senderEmails
 
     def latestTimestamp(self):
+        """The """
         return self.messages[-1].timestamp
 
     def addLabel(self, label):
+        """Add the label ``label`` to every message in this thread."""
         addLabel(self, label)  # The global addLabel() function implements this feature.
 
     def removeLabel(self, label):
+        """Remove the label ``label`` from every message in this thread, if it's there."""
         removeLabel(self, label)  # The global removeLabel() function implements this feature.
 
     def markAsRead(self):
+        """Mark every message in this thread as read. (This does the same thing as removing the UNREAD label from the
+        messages.)"""
         markAsRead(self)
 
     def markAsUnread(self):
+        """Mark every message in this thread as unread. (This does the same thing as adding the UNREAD label to the
+        messages.)"""
         markAsUnread(self)
 
 
 def removeQuotedParts(emailText):
-    """Takes the body of an email and returns the text up to the quoted "reply" text that begins with "On Sun, Jan 1, 2018 at 12:00 PM al@inventwithpython.com wrote:" part."""
+    """Returns the text in ``emailText`` up to the quoted "reply" text that begins with
+    "On Sun, Jan 1, 2018 at 12:00 PM al@inventwithpython.com wrote:" part."""
     replyPattern = re.compile(
         r"On (Sun|Mon|Tue|Wed|Thu|Fri|Sat), (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d+, \d\d\d\d at \d+:\d+ (AM|PM) (.*?) wrote:"
     )
@@ -131,14 +145,31 @@ def removeQuotedParts(emailText):
 
 
 class GmailMessage:
-    """Represents a Gmail messages. These objects are returned by the users.messages.get() API call. They contain all the header/subject/body information of a single email.
+    """Represents a Gmail messages. These objects are returned by the users.messages.get() API call. They contain all
+    the header/subject/body information of a single email.
 
-    Note that the `body` attribute contains text up to the quoted "reply" text that begins with "On Sun, Jan 1, 2018 at 12:00 PM al@inventwithpython.com wrote:" part.
+    The ``sender`` attribute has a string like ``'Google <no-reply@accounts.google.com>'``.
 
-    The full body is in the `originalBody` attribute."""
+    The ``recipient`` attribute has a string like ``al@inventwithpython.com'``.
+
+    The ``subject`` attribute contains a string of the subject line.
+
+    The ``body`` attribute contains text up to the quoted "reply" text that begins with
+    "On Sun, Jan 1, 2018 at 12:00 PM al@inventwithpython.com wrote:" part.
+
+    The ``originalBody`` attribute contains the full message body.
+
+    The ``timestamp`` attribute contains a ``datetime.datetime`` object of the internal message creation timestamp (epoch
+    ms), which determines ordering in the inbox.
+
+    The ``snippet`` attribute contains a string of up to the first 200 characters of the body.
+
+    These attributes are based on the Gmail API: https://developers.google.com/gmail/api/v1/reference/users/messages
+    """
 
     def __init__(self, messageObj):
-        """Create a GmailMessage objet. The `messageObj` is the dictionary returned by the users.messages.get() API call."""
+        """Create a GmailMessage object. The ``messageObj`` is the dictionary returned by the ``users.messages.get()`` API
+        call."""
         self.messageObj = copy.deepcopy(
             messageObj
         )  # TODO should we make a copy of this to prevent further modification? Sure.
@@ -182,13 +213,13 @@ class GmailMessage:
                         if header["name"].upper() == "CONTENT-TYPE":
                             emailEncoding = _parseContentTypeHeaderForEncoding(header["value"])
 
-                    # `originalBody` has the full body of the email, while the more useful `body` only has everything up until the quoted reply part.
+                    # ``originalBody`` has the full body of the email, while the more useful ``body`` only has everything up until the quoted reply part.
                     self.originalBody = base64.urlsafe_b64decode(part["body"]["data"]).decode(emailEncoding)
                     self.body = removeQuotedParts(self.originalBody)
 
                 if part["mimeType"].upper() == "MULTIPART/ALTERNATIVE":
                     # Emails with attachments can have the body of the email in a 'multipart/alternative' area of the dictionary.
-                    # There is a recursive-looking structure here, where `part` has it's own 'parts' list.
+                    # There is a recursive-looking structure here, where ``part`` has it's own 'parts' list.
                     for multipartPart in part["parts"]:
                         if multipartPart["mimeType"].upper() == "TEXT/PLAIN" and "data" in multipartPart["body"]:
                             # Find the encoding and the body.
@@ -196,7 +227,7 @@ class GmailMessage:
                                 if header["name"].upper() == "CONTENT-TYPE":
                                     emailEncoding = _parseContentTypeHeaderForEncoding(header["value"])
 
-                            # `originalBody` has the full body of the email, while the more useful `body` only has everything up until the quoted reply part.
+                            # ``originalBody`` has the full body of the email, while the more useful ``body`` only has everything up until the quoted reply part.
                             self.originalBody = base64.urlsafe_b64decode(multipartPart["body"]["data"]).decode(
                                 emailEncoding
                             )
@@ -222,7 +253,7 @@ class GmailMessage:
 
         # TODO - Future features include labels.
 
-    def __str__(self):
+    def __repr__(self):
         return "<GmailMessage from=%r to=%r timestamp=%r subject=%r snippet=%r>" % (
             self.sender,
             self.recipient,
@@ -231,14 +262,23 @@ class GmailMessage:
             self.snippet,
         )
 
+    def __str__(self):
+        return self.__repr__()
+
     def senders(self):
+        # TODO - There's only going to be one sender, but this is here because the summary() function calls senders()
+        # on both thread and message objects. This isn't intended to be called by users directly.
         return [self.sender]
 
     def latestTimestamp(self):
+        # TODO - There's only going to be one timestamp, but this is here because the summary() function calls
+        # latestTimestamp() on both thread and message objects. This isn't intended to be called by users directly.
         return self.timestamp
 
     def downloadAttachment(self, filename, downloadFolder=".", duplicateIndex=0):
-        # NOTE: If there are multiple attachments with the same name, duplicateIndex needs to be passed to specify later ones.
+        """Download the file attachment in this message with the name ``filename`` to the local folder ``downloadFolder``.
+        If there are multiple attachments with the same name, ``duplicateIndex`` needs to be passed to specify
+        which attachment to download."""
         if filename not in self.attachments:
             raise EZGmailException("No attachment named %s found among %s" % (filename, list(self.attachments.keys())))
 
@@ -274,6 +314,8 @@ class GmailMessage:
         fo.close()
 
     def downloadAllAttachments(self, downloadFolder=".", overwrite=True):
+        """Download all of the attachments in this message to the local folder ``downloadFolder``. If ``overwrite`` is
+        ``True``, existing local files will be overwritten by attachments with the same filename."""
         if not overwrite:
             attachmentFilenames = [a["filename"] for a in self._attachmentsInfo]
             if len(attachmentFilenames) != len(set(attachmentFilenames)):
@@ -314,15 +356,21 @@ class GmailMessage:
         return downloadedAttachmentFilenames
 
     def addLabel(self, label):
+        """Add the label ``label`` to every message in this thread."""
         addLabel(self, label)  # The global addLabel() function implements this feature.
 
     def removeLabel(self, label):
+        """Remove the label ``label`` from every message in this thread, if it's there."""
         removeLabel(self, label)  # The global removeLabel() function implements this feature.
 
     def markAsRead(self):
+        """Mark every message in this thread as read. (This does the same thing as removing the UNREAD label from the
+        messages.)"""
         markAsRead(self)
 
     def markAsUnread(self):
+        """Mark every message in this thread as unread. (This does the same thing as adding the UNREAD label to the
+        messages.)"""
         markAsUnread(self)
 
 
@@ -330,20 +378,24 @@ def _parseContentTypeHeaderForEncoding(value):
     """Helper function called by GmailMessage:__init__()."""
     mo = re.search('charset="(.*?)"', value)
     if mo is None:
-        emailEncoding = "UTF-8"  # We're going to assume UTF-8 and hope for the best. Safety not guaranteed.
+        emailEncoding = "UTF-8"  # We're going to assume UTF-8 and hope for the best. "Safety not guaranteed."
     else:
         emailEncoding = mo.group(1)
     return emailEncoding
 
 
 def init(userId="me", tokenFile="token.json", credentialsFile="credentials.json", _raiseException=True):
-    """This function must be called before any other function in EZGmail (and is automatically called by them anyway, so you don't have to explicitly call this yourself).
+    """This function must be called before any other function in EZGmail (and is automatically called by them anyway,
+    so you don't have to explicitly call this yourself).
 
-    This function populates the SERVICE_GMAIL global variable used in all Gmail API cals. It also populates EMAIL_ADDRESS with a string of the Gmail accont's email address. This
-    account is determined by the credentials.json file, downloaded from Google, and token.json. If the tokenFile file hasn't been generated yet, this function will open
-    the browser to a page to let the user log in to the Gmail account that this module will use.
+    This function populates the ``SERVICE_GMAIL`` global variable used in all Gmail API cals. It also populates
+    ``EMAIL_ADDRESS`` with a string of the Gmail accont's email address (and sets the global ``LOGGED_IN`` to ``True``). This
+    account is determined by the *credentials.json* file, downloaded from Google, and *token.json*. If the ``tokenFile``
+    file hasn't been generated yet, this function will open the browser to a page to let the user log in to the Gmail
+    account that this module will use.
 
-    If you want to switch to a different Gmail account, call this function again with a different `tokenFile` and `credentialsFile` arguments.
+    If you want to switch to a different Gmail account, call this function again with a different ``tokenFile`` and
+    ``credentialsFile`` arguments.
     """
     global SERVICE_GMAIL, EMAIL_ADDRESS, LOGGED_IN
 
@@ -377,8 +429,8 @@ def init(userId="me", tokenFile="token.json", credentialsFile="credentials.json"
 
 
 def _createMessage(sender, recipient, subject, body, cc=None, bcc=None):
-    """Creates a MIMEText object and returns it as a base64 encoded string in a {'raw': b64_MIMEText_object} dictionary, suitable for use by _sendMessage() and the
-    users.messages.send()."""
+    """Creates a MIMEText object and returns it as a base64 encoded string in a ``{'raw': b64_MIMEText_object} ``
+    dictionary, suitable for use by ``_sendMessage()`` and the ``users.messages.send()`` Gmail API."""
     message = MIMEText(body, "plain")
     message["to"] = recipient
     message["from"] = sender
@@ -391,10 +443,16 @@ def _createMessage(sender, recipient, subject, body, cc=None, bcc=None):
 
 
 def _createMessageWithAttachments(sender, recipient, subject, body, attachments, cc=None, bcc=None):
-    """Creates a MIMEText object and returns it as a base64 encoded string in a {'raw': b64_MIMEText_object} dictionary, suitable for use by _sendMessage() and the
-    users.messages.send(). File attachments can also be added to this message.
+    """Creates a MIMEText object and returns it as a base64 encoded string in a ``{'raw': b64_MIMEText_object}``
+    dictionary, suitable for use by ``_sendMessage()`` and the ``users.messages.send()`` Gmail API. File attachments can
+    also be added to this message.
 
-    `attachments` is a list of strings of filenames."""
+    The ``sender``, ``recipient``, ``subject``, ``body`` arguments are strings.
+
+    The ``attachments`` argument is a list of strings of filenames.
+
+    The ``cc`` and ``bcc`` arguments are strings with comma-delimited email addresses.
+    """
     message = MIMEMultipart()
     message["to"] = recipient
     message["from"] = sender
@@ -408,7 +466,7 @@ def _createMessageWithAttachments(sender, recipient, subject, body, attachments,
     message.attach(messageMimeTextPart)
 
     if isinstance(attachments, str):
-        attachments = [attachments]  # If it's a string, put `attachments` in a list.
+        attachments = [attachments]  # If it's a string, put ``attachments`` in a list.
 
     for attachment in attachments:
         # Check that the file exists.
@@ -445,7 +503,8 @@ def _createMessageWithAttachments(sender, recipient, subject, body, attachments,
 
 
 def _sendMessage(message, userId="me"):
-    """Sends an email based on the `message` object, which is returned by _createMessage() or _createMessageWithAttachments()."""
+    """Sends an email based on the ``message`` object, which is returned by ``_createMessage()`` or
+    ``_createMessageWithAttachments()``."""
     message = SERVICE_GMAIL.users().messages().send(userId=userId, body=message).execute()
     return message
 
@@ -468,12 +527,13 @@ def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=N
 def search(query, maxResults=25, userId="me"):
     """Returns a list of GmailThread objects that match the search query.
 
-    The `query` string is exactly the same as you would type in the Gmail search box, and you can use the search operatives for it too:
+    The ``query`` string is exactly the same as you would type in the Gmail search box, and you can use the search
+    operatives for it too:
 
-        label:UNREAD
-        from:al@inventwithpython.com
-        subject:hello
-        has:attachment
+        * label:UNREAD
+        * from:al@inventwithpython.com
+        * subject:hello
+        * has:attachment
 
     More are described at https://support.google.com/mail/answer/7190?hl=en
     """
@@ -517,7 +577,7 @@ def searchMessages(query, maxResults=25, userId='me'):
 
 
 def getMessage(query, userId='me'):
-    """Return a GmailMessage object of the first search result for `query`. Essentially a wrapper for search()."""
+    """Return a GmailMessage object of the first search result for ``query``. Essentially a wrapper for search()."""
     if SERVICE_GMAIL is None: init()
 
     messages = searchMessages(query, 1, userId)
@@ -529,19 +589,19 @@ def getMessage(query, userId='me'):
 
 
 def recent(maxResults=25, userId="me"):
-    """Return a list of GmailThread objects for the most recent emails. Essentially a wrapper for search().
+    """Return a list of ``GmailThread`` objects for the most recent emails. Essentially a wrapper for ``search()``.
 
     First index is the most recent."""
     return search("label:INBOX", maxResults, userId)
 
 
 def unread(maxResults=25, userId="me"):
-    """Return a list of GmailThread objects for unread emails. Essentially a wrapper for search()."""
+    """Return a list of ``GmailThread`` objects for unread emails. Essentially a wrapper for ``search()``."""
     return search("label:UNREAD", maxResults, userId)
 
 
 def summary(gmailObjects, printInfo=True):
-    """Prints out a summary of the GmailThread or GmailMessage in the `gmailObjects` list, similar to the way """
+    """Prints out a summary of the ``GmailThread`` or ``GmailMessage`` in the ``gmailObjects`` list."""
     if SERVICE_GMAIL is None:
         init()
 
@@ -571,6 +631,7 @@ def summary(gmailObjects, printInfo=True):
 
 
 def removeLabel(gmailObjects, label, userId="me"):
+    # This is a helper function not meant to be called directly by the user.
     if SERVICE_GMAIL is None:
         init()
 
@@ -586,6 +647,7 @@ def removeLabel(gmailObjects, label, userId="me"):
 
 
 def addLabel(gmailObjects, label, userId="me"):
+    # This is a helper function not meant to be called directly by the user.
     if SERVICE_GMAIL is None:
         init()
 
@@ -601,10 +663,12 @@ def addLabel(gmailObjects, label, userId="me"):
 
 
 def markAsRead(gmailObjects, userId="me"):
+    # This is a helper function not meant to be called directly by the user.
     removeLabel(gmailObjects, "UNREAD", userId)
 
 
 def markAsUnread(gmailObjects, userId="me"):
+    # This is a helper function not meant to be called directly by the user.
     addLabel(gmailObjects, "UNREAD", userId)
 
 
