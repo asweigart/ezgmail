@@ -108,10 +108,10 @@ You can search for messages by calling ``ezgmail.search('query string')``, which
 objects. The query string is exactly the same as you would type in the Gmail search box, and you can use the search
 operatives for it too:
 
-    * label:UNREAD
-    * from:al@inventwithpython.com
-    * subject:hello
-    * has:attachment
+    * ``ezgmail.search('label:UNREAD')``
+    * ``ezgmail.search('from:al@inventwithpython.com')``
+    * ``ezgmail.search('subject:hello')``
+    * ``ezgmail.search('has:attachment')``
 
 More search operatives are described at https://support.google.com/mail/answer/7190?hl=en
 
