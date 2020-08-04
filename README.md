@@ -1,7 +1,7 @@
 EZGmail
 ======
 
-A Pythonic interface to the Gmail API that actually works as of March 2020.
+A Pythonic interface to the Gmail API that actually works as of August 2020.
 
 The Gmail API quickstart doesn't actually seem to work on Python 3 without some adjustments, and the entire documentation is a bit much for someone who just wants to read and send emails from their Gmail account. EZGmail just works.
 
