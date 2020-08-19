@@ -681,7 +681,7 @@ def sendToTrash(gmailObjects, userId="me"):
             if isinstance(obj, GmailThread):
                 SERVICE_GMAIL.users().threads().trash(userId=userId, id=obj.id).execute()
             elif isinstance(obj, GmailMessage):
-                SERVICE_GMAIL.users().threads().trash(userId=userID, id=obj.id).execute()
+                SERVICE_GMAIL.users().messages().trash(userId=userID, id=obj.id).execute()
 
 def markAsRead(gmailObjects, userId="me"):
     # This is a helper function not meant to be called directly by the user.
