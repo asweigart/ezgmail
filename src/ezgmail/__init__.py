@@ -692,7 +692,7 @@ def markAsUnread(gmailObjects, userId="me"):
     addLabel(gmailObjects, "UNREAD", userId)
 
 def trash(gmailObjects, userId="me"):
-    # This is a helperfunction not meant to be called directly by the user.
+    # This is a helper function not meant to be called directly by the user.
     sendToTrash(gmailObjects, userId)
 
 init(_raiseException=False)
