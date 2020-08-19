@@ -670,7 +670,7 @@ def addLabel(gmailObjects, label, userId="me"):
             SERVICE_GMAIL.users().messages().modify(userId=userId, id=obj.id, body=removeUnreadLabelObj).execute()
 
 def sendToTrash(gmailObjects, userId="me"):
-    # This is a helperfunction not meant to be called directly by the user.
+    # This is a helper function not meant to be called directly by the user.
     if SERVICE_GMAIL is None:
         init()
 
