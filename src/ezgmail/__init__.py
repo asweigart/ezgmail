@@ -4,7 +4,7 @@
 # Note: Unless you know what you're doing, also use the default 'me' value for userId parameters in this module.
 
 
-__version__ = "2020.8.18"
+__version__ = "2020.8.25"
 
 """
 NOTES FOR DEVELOPERS AND CONTRIBUTORS:
@@ -132,6 +132,9 @@ class GmailThread:
         This is the preferred method to deleting a thread according to the documentation."""
         trash(self)
 
+    def archive(self):
+        """Removes the INBOX label and marks as read """
+        archive(self)
 
 def removeQuotedParts(emailText):
     """Returns the text in ``emailText`` up to the quoted "reply" text that begins with
@@ -381,6 +384,9 @@ class GmailMessage:
         This is the preferred method to deleting a thread according to the documentation."""
         trash(self)
 
+    def archive(self):
+        """Removes the INBOX label and marks as read """
+        archive(self)
 
 def _parseContentTypeHeaderForEncoding(value):
     """Helper function called by GmailMessage:__init__()."""
@@ -694,5 +700,10 @@ def markAsUnread(gmailObjects, userId="me"):
 def trash(gmailObjects, userId="me"):
     # This is a helper function not meant to be called directly by the user.
     sendToTrash(gmailObjects, userId)
+
+def archive(gmailObjects, userId="me"):
+    # This is a helper function not meant to be called directly by the user.
+    removeLabel(gmailObjects, "UNREAD", userId)
+    removeLabel(gmailObjects, "INBOX", userId)
 
 init(_raiseException=False)
