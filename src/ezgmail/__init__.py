@@ -38,6 +38,7 @@ import os
 import datetime
 import re
 import copy
+import warnings
 
 from googleapiclient.discovery import build
 from httplib2 import Http
@@ -122,25 +123,25 @@ class GmailThread:
 
     def addLabel(self, label):
         """Add the label ``label`` to every message in this thread."""
-        addLabel(self, label)  # The global addLabel() function implements this feature.
+        _addLabel(self, label)  # The global _addLabel() function implements this feature.
 
     def removeLabel(self, label):
         """Remove the label ``label`` from every message in this thread, if it's there."""
-        removeLabel(self, label)  # The global removeLabel() function implements this feature.
+        _removeLabel(self, label)  # The global _removeLabel() function implements this feature.
 
     def markAsRead(self):
         """Mark every message in this thread as read. (This does the same thing as removing the UNREAD label from the
         messages.)"""
-        markAsRead(self)
+        _markAsRead(self)  # The global _markAsRead() function implements this feature.
 
     def markAsUnread(self):
         """Mark every message in this thread as unread. (This does the same thing as adding the UNREAD label to the
         messages.)"""
-        markAsUnread(self)
+        _markAsUnread(self)  # The global _markAsUnread() function implements this feature.
 
     def trash(self):
         """Move every message in this thread to the Trash folder. It will be automatically removed in 30 days."""
-        _trash(self)
+        _trash(self)  # The global _trash() function implements this feature.
 
 
 def removeQuotedParts(emailText):
@@ -370,23 +371,23 @@ class GmailMessage:
 
     def addLabel(self, label):
         """Add the label ``label`` to every message in this thread."""
-        addLabel(self, label)  # The global addLabel() function implements this feature.
+        _addLabel(self, label)  # The global _addLabel() function implements this feature.
 
     def removeLabel(self, label):
         """Remove the label ``label`` from every message in this thread, if it's there."""
-        removeLabel(self, label)  # The global removeLabel() function implements this feature.
+        _removeLabel(self, label)  # The global _removeLabel() function implements this feature.
 
     def markAsRead(self):
         """Mark this message as read. (This does the same thing as removing the UNREAD label from the message.)"""
-        markAsRead(self)
+        _markAsRead(self)  # The global _markAsRead() function implements this feature.
 
     def markAsUnread(self):
         """Mark this message as unread. (This does the same thing as adding the UNREAD label to the message.)"""
-        markAsUnread(self)
+        _markAsUnread(self)  # The global _markAsUnread() function implements this feature.
 
     def trash(self):
         """Move this message to the Trash folder. It will be automatically removed in 30 days."""
-        _trash(self)
+        _trash(self)  # The global _trash() function implements this feature.
 
 
 def _parseContentTypeHeaderForEncoding(value):
@@ -662,7 +663,13 @@ def summary(gmailObjects, printInfo=True):
         return summaryText  # Return the raw list of tuples info.
 
 
-def removeLabel(gmailObjects, label, userId="me"):
+def removeLabel(*args, **kwargs):
+    # This deprecation warning added in version 2020.9.30:
+    warnings.warn('Do not call the removeLabel() function directly, but rather the removeLabel() methods in the GmailMessage and GmailThread classes.')
+    _removeLabel(*args, **kwargs)
+
+
+def _removeLabel(gmailObjects, label, userId="me"):
     # This is a helper function not meant to be called directly by the user.
     if SERVICE_GMAIL is None:
         init()
@@ -678,7 +685,13 @@ def removeLabel(gmailObjects, label, userId="me"):
             SERVICE_GMAIL.users().messages().modify(userId=userId, id=obj.id, body=removeUnreadLabelObj).execute()
 
 
-def addLabel(gmailObjects, label, userId="me"):
+def addLabel(*args, **kwargs):
+    # This deprecation warning added in version 2020.9.30:
+    warnings.warn('Do not call the addLabel() function directly, but rather the addLabel() methods in the GmailMessage and GmailThread classes.')
+    _addLabel(*args, **kwargs)
+
+
+def _addLabel(gmailObjects, label, userId="me"):
     # This is a helper function not meant to be called directly by the user.
     if SERVICE_GMAIL is None:
         init()
@@ -694,14 +707,26 @@ def addLabel(gmailObjects, label, userId="me"):
             SERVICE_GMAIL.users().messages().modify(userId=userId, id=obj.id, body=removeUnreadLabelObj).execute()
 
 
-def markAsRead(gmailObjects, userId="me"):
-    # This is a helper function not meant to be called directly by the user.
-    removeLabel(gmailObjects, "UNREAD", userId)
+def markAsRead(*args, **kwargs):
+    # This deprecation warning added in version 2020.9.30:
+    warnings.warn('Do not call the markAsRead() function directly, but rather the markAsRead() methods in the GmailMessage and GmailThread classes.')
+    _markAsRead(*args, **kwargs)
 
 
-def markAsUnread(gmailObjects, userId="me"):
+def _markAsRead(gmailObjects, userId="me"):
     # This is a helper function not meant to be called directly by the user.
-    addLabel(gmailObjects, "UNREAD", userId)
+    _removeLabel(gmailObjects, "UNREAD", userId)
+
+
+def markAsUnread(*args, **kwargs):
+    # This deprecation warning added in version 2020.9.30:
+    warnings.warn('Do not call the markAsUnread() function directly, but rather the markAsUnread() methods in the GmailMessage and GmailThread classes.')
+    _markAsUnread(*args, **kwargs)
+
+
+def _markAsUnread(gmailObjects, userId="me"):
+    # This is a helper function not meant to be called directly by the user.
+    _addLabel(gmailObjects, "UNREAD", userId)
 
 
 def _trash(gmailObjects, userId="me"):
