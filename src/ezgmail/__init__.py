@@ -4,7 +4,7 @@
 # Note: Unless you know what you're doing, also use the default 'me' value for userId parameters in this module.
 
 
-__version__ = "2020.8.3"
+__version__ = "2020.9.29"
 
 """
 NOTES FOR DEVELOPERS AND CONTRIBUTORS:
@@ -53,7 +53,18 @@ LOGGED_IN = False  # False if not logged in, otherwise True
 class EZGmailException(Exception):
     """The base class for all EZGmail-specific problems. If the ``ezgmail`` module raises something that isn't this or
     a subclass of this exception, you can assume it is caused by a bug in EZGmail."""
+    pass
 
+
+class EZGmailValueError(EZGmailException):
+    """The EZGmail module equivalent of ValueError. This exception is raised when a parameter of an incorrect value
+    (but not necessarily an incorrect type) is passed to an EZGmail function."""
+    pass
+
+
+class EZGmailTypeError(EZGmailException):
+    """The EZGmail module equivalent of ValueError. This exception is raised when a parameter of an incorrect type
+    is passed to an EZGmail function."""
     pass
 
 
@@ -397,9 +408,8 @@ def init(userId="me", tokenFile="token.json", credentialsFile="credentials.json"
     """
     global SERVICE_GMAIL, EMAIL_ADDRESS, LOGGED_IN
 
-    EMAIL_ADDRESS = (
-        False
-    )  # Set this to False, in case module was initialized before but this current initialization fails.
+    # Set this to False, in case module was initialized before but this current initialization fails.
+    EMAIL_ADDRESS = False
     LOGGED_IN = False
 
     try:
@@ -426,10 +436,16 @@ def init(userId="me", tokenFile="token.json", credentialsFile="credentials.json"
             return False
 
 
-def _createMessage(sender, recipient, subject, body, cc=None, bcc=None, mime_subtype="plain"):
+def _createMessage(sender, recipient, subject, body, cc=None, bcc=None, mimeSubtype="plain"):
     """Creates a MIMEText object and returns it as a base64 encoded string in a ``{'raw': b64_MIMEText_object} ``
     dictionary, suitable for use by ``_sendMessage()`` and the ``users.messages.send()`` Gmail API."""
-    message = MIMEText(body, mime_subtype)
+    if not isinstance(mimeSubtype, str):
+        raise EZGmailTypeError('wrong type passed for mimeSubtype arg; must be "plain" or "html"')
+    mimeSubtype = mimeSubtype.lower()
+    if mimeSubtype not in ("html", "plain"):
+        raise EZGmailValueError('wrong string passed for mimeSubtype arg; must be "plain" or "html"')
+
+    message = MIMEText(body, mimeSubtype)
     message["to"] = recipient
     message["from"] = sender
     message["subject"] = subject
@@ -440,7 +456,7 @@ def _createMessage(sender, recipient, subject, body, cc=None, bcc=None, mime_sub
     return {"raw": base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")}
 
 
-def _createMessageWithAttachments(sender, recipient, subject, body, attachments, cc=None, bcc=None, mime_subtype="plain"):
+def _createMessageWithAttachments(sender, recipient, subject, body, attachments, cc=None, bcc=None, mimeSubtype="plain"):
     """Creates a MIMEText object and returns it as a base64 encoded string in a ``{'raw': b64_MIMEText_object}``
     dictionary, suitable for use by ``_sendMessage()`` and the ``users.messages.send()`` Gmail API. File attachments can
     also be added to this message.
@@ -451,6 +467,12 @@ def _createMessageWithAttachments(sender, recipient, subject, body, attachments,
 
     The ``cc`` and ``bcc`` arguments are strings with comma-delimited email addresses.
     """
+    if not isinstance(mimeSubtype, str):
+        raise EZGmailTypeError('wrong type passed for mimeSubtype arg; must be "plain" or "html"')
+    mimeSubtype = mimeSubtype.lower()
+    if mimeSubtype not in ("html", "plain"):
+        raise EZGmailValueError('wrong string passed for mimeSubtype arg; mimeSubtype arg must be "plain" or "html"')
+
     message = MIMEMultipart()
     message["to"] = recipient
     message["from"] = sender
@@ -460,7 +482,7 @@ def _createMessageWithAttachments(sender, recipient, subject, body, attachments,
     if bcc is not None:
         message["bcc"] = bcc
 
-    messageMimeTextPart = MIMEText(body, mime_subtype)
+    messageMimeTextPart = MIMEText(body, mimeSubtype)
     message.attach(messageMimeTextPart)
 
     if isinstance(attachments, str):
@@ -507,21 +529,24 @@ def _sendMessage(message, userId="me"):
     return message
 
 
-def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=None, mime_subtype=None):
+def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=None, mimeSubtype="plain"):
     """Sends an email from the configured Gmail account."""
+    if not isinstance(mimeSubtype, str):
+        raise EZGmailTypeError('wrong type passed for mimeSubtype arg; must be "plain" or "html"')
+    mimeSubtype = mimeSubtype.lower()
+    if mimeSubtype not in ("html", "plain"):
+        raise EZGmailValueError('wrong string passed for mimeSubtype arg; mimeSubtype arg must be "plain" or "html"')
+
     if SERVICE_GMAIL is None:
         init()
 
     if sender is None:
         sender = EMAIL_ADDRESS
 
-    if mime_subtype is None:
-        mime_subtype = "plain"
-
     if attachments is None:
-        msg = _createMessage(sender, recipient, subject, body, cc, bcc, mime_subtype)
+        msg = _createMessage(sender, recipient, subject, body, cc, bcc, mimeSubtype)
     else:
-        msg = _createMessageWithAttachments(sender, recipient, subject, body, attachments, cc, bcc, mime_subtype)
+        msg = _createMessageWithAttachments(sender, recipient, subject, body, attachments, cc, bcc, mimeSubtype)
     _sendMessage(msg)
 
 

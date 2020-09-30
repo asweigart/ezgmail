@@ -1,3 +1,4 @@
+2020.9.28 - 2020/09/28 - Added plain/html mime subtype. Also added a note to remind myself (Al) how to run the unit tests.
 0.0.6 - 2019/06/13 - Fixed bug with summary()
 0.0.4 - 2018/12/13 - Downloading attachments.
 0.0.3 - 2018/12/11 - Sending attachments, and cc and bcc.

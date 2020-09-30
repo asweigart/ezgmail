@@ -1,7 +1,7 @@
 EZGmail
 ======
 
-A Pythonic interface to the Gmail API that actually works as of August 2020.
+A Pythonic interface to the Gmail API that actually works as of September 2020.
 
 The Gmail API quickstart doesn't actually seem to work on Python 3 without some adjustments, and the entire documentation is a bit much for someone who just wants to read and send emails from their Gmail account. EZGmail just works.
 
@@ -106,6 +106,10 @@ The ``search()`` function can accept search operators just like the query text f
 More are described at https://support.google.com/mail/answer/7190?hl=en
 
 The ``search()``, ``recent()``, and ``unread()`` can also accept a ``maxResults`` keyword argument that is set to 25 by default. This sets an upper limit on how many threads/messages will be returned. API usage quotas are posted at https://developers.google.com/gmail/api/v1/reference/quota (roughly one million requests a day (and 25 per second) for the free tier).
+
+By default, EZGmail sends messages as plaintext. You can send HTML emails by passing ``'html'`` for the ``mimeSubtype`` parameter in ``send()``. (By default, this parameter is set to ``'plain'``.) This email has "Hello" appear in bold and "body" appear italicized:
+
+    >>> ezgmail.send('recipient@example.com', 'Subject Line', '<strong>Hello</strong>, this is the <em>body</em> of the message.', mimeSubtype='html')
 
 Accessing an email or thread doesn't mark it as unread automatically. You must do that yourself by calling the ``markAsRead()`` method of the ``GmailThread`` or ``GmailMessage`` object. (There is also a corresponding ``markAsUnread()`` function.) You can also call ``ezgmail.markAsRead()`` and pass it a list of ``GmailThread`` or ``GmailMessage`` objects.
 

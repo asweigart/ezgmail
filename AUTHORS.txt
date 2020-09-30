@@ -4,3 +4,5 @@ answer newbie questions, and generally made EZGmail that much better:
 
 Al Sweigart https://github.com/asweigart
 freightflows https://github.com/freightflows
+William Darragh https://github.com/WillDarragh
+Zachary Wilkins https://github.com/znwilkins
