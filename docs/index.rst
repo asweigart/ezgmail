@@ -140,6 +140,12 @@ These two functions make add/remove the ``'UNREAD'`` label using EZGmail's ``add
 
 (Currently EZGmail doesn't have functions for adding/deleting/managing custom labels.)
 
+The ``trash()`` method deletes the message or messages in a ``GmailMessage`` or ``GmailThread`` object:
+
+    >>> import ezgmail
+    >>> threads = ezgmail.search('mancala')
+    >>> threads[0].trash()  # Move the entire first thread to the Trash folder.
+
 To view the attachments of an email, look at the ``GmailMessage`` object's ``attachments`` dictionary. The keys are the filenames of the attachments. You can either call the ``downloadAttachment()`` or ``downloadAllAttachments()`` methods:
 
     >>> import ezgmail

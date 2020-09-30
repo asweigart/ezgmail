@@ -138,6 +138,10 @@ class GmailThread:
         messages.)"""
         markAsUnread(self)
 
+    def trash(self):
+        """Move every message in this thread to the Trash folder. It will be automatically removed in 30 days."""
+        _trash(self)
+
 
 def removeQuotedParts(emailText):
     """Returns the text in ``emailText`` up to the quoted "reply" text that begins with
@@ -373,14 +377,16 @@ class GmailMessage:
         removeLabel(self, label)  # The global removeLabel() function implements this feature.
 
     def markAsRead(self):
-        """Mark every message in this thread as read. (This does the same thing as removing the UNREAD label from the
-        messages.)"""
+        """Mark this message as read. (This does the same thing as removing the UNREAD label from the message.)"""
         markAsRead(self)
 
     def markAsUnread(self):
-        """Mark every message in this thread as unread. (This does the same thing as adding the UNREAD label to the
-        messages.)"""
+        """Mark this message as unread. (This does the same thing as adding the UNREAD label to the message.)"""
         markAsUnread(self)
+
+    def trash(self):
+        """Move this message to the Trash folder. It will be automatically removed in 30 days."""
+        _trash(self)
 
 
 def _parseContentTypeHeaderForEncoding(value):
@@ -697,5 +703,18 @@ def markAsUnread(gmailObjects, userId="me"):
     # This is a helper function not meant to be called directly by the user.
     addLabel(gmailObjects, "UNREAD", userId)
 
+
+def _trash(gmailObjects, userId="me"):
+    if SERVICE_GMAIL is None:
+        init()
+
+    if isinstance(gmailObjects, (GmailThread, GmailMessage)):
+        gmailObjects = [gmailObjects]  # Make this uniformly in a list.
+
+        for obj in gmailObjects:
+            if isinstance(obj, GmailThread):
+                SERVICE_GMAIL.users().threads().trash(userId=userId, id=obj.id).execute()
+            elif isinstance(obj, GmailMessage):
+                SERVICE_GMAIL.users().messages().trash(userId=userId, id=obj.id).execute()
 
 init(_raiseException=False)

@@ -80,7 +80,7 @@ The ``GmailMessage`` objects have ``sender``, ``recipient``, ``subject``, ``body
     >>> msg.timestamp
     datetime.datetime(2018, 12, 9, 13, 28, 48)
 
-You can also call the ``recent()`` method to get recent email threads:
+You can also call the ``recent()`` function to get recent email threads:
 
     >>> import ezgmail
     >>> recentThreads = ezgmail.recent()
@@ -95,6 +95,12 @@ The ``recent()`` and ``unread()`` functions are just convenient wrappers around 
     1
     >>> ezgmail.summary(threads[0])
     Al, Jon - Zanzibar &gt; <b>Mancala</b> is one of the oldest known games to still be widely played today. &gt; <b>Mancala</b> is a generic name for a - Dec 08
+
+The ``trash()`` method deletes the message or messages in a ``GmailMessage`` or ``GmailThread`` object:
+
+    >>> import ezgmail
+    >>> threads = ezgmail.search('mancala')
+    >>> threads[0].trash()  # Move the entire first thread to the Trash folder.
 
 The ``search()`` function can accept search operators just like the query text field:
 
