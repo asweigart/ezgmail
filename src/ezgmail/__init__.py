@@ -44,6 +44,9 @@ from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
 
+# Copied from https://emailregex.com/:
+EMAIL_ADDRESS_REGEX = re.compile(r'''(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])''')
+
 # SCOPES = 'https://www.googleapis.com/auth/gmail.readonly' # read-only mode
 SCOPES = "https://mail.google.com/"  # read-write mode
 SERVICE_GMAIL = None
@@ -99,7 +102,10 @@ class GmailThread:
             for msg in self.extendedThreadObj["messages"]:
                 self._messages.append(GmailMessage(msg))
 
-        return self._messages
+        # Quick sanity check to make sure it's never possible to have a GmailThread object with zero messages:
+        assert len(self._messages) > 0, "GmailThread object has zero messages; please file a new bug report issue: https://github.com/asweigart/ezgmail/issues"
+
+        return self._messages  # TODO - Return copy.deepcopy(self._messages)? Would that be safer?
 
     def __str__(self):
         return self.__repr__()
@@ -142,6 +148,21 @@ class GmailThread:
     def trash(self):
         """Move every message in this thread to the Trash folder. It will be automatically removed in 30 days."""
         _trash(self)  # The global _trash() function implements this feature.
+
+    # NOTE: Let's see if there's any demand for replying to threads instead of particular messages before adding these methods:
+    #def reply(self, body, attachments=None, cc=None, bcc=None, mimeSubtype="plain"):
+    #    """Like the send() function, but replies to the last message in this thread."""
+    #
+    #    # NOTE: Since the ``sender`` argument is ignored by Gmail anyway, I'm not including in this method the
+    #    # way it is included in ``send()``.
+    #    self.messages[-1].reply(body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype)
+    #
+    #def replyAll(self, body, attachments=None, cc=None, bcc=None, mimeSubtype="plain"):
+    #    """Like the send() function, but replies to the last message in this thread."""
+    #
+    #    # NOTE: Since the ``sender`` argument is ignored by Gmail anyway, I'm not including in this method the
+    #    # way it is included in ``send()``.
+    #    self.messages[-1].replyAll(body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype)
 
 
 def removeQuotedParts(emailText):
@@ -389,6 +410,28 @@ class GmailMessage:
         """Move this message to the Trash folder. It will be automatically removed in 30 days."""
         _trash(self)  # The global _trash() function implements this feature.
 
+    def reply(self, body, attachments=None, cc=None, bcc=None, mimeSubtype="plain"):
+        """Like the send() function, but replies to the last message in this thread."""
+
+        # NOTE: Since the ``sender`` argument is ignored by Gmail anyway, I'm not including in this method the
+        # way it is included in ``send()``.
+
+        # From https://developers.google.com/gmail/api/guides/sending
+        # If you're trying to send a reply and want the email to thread, make sure that:
+        #    1. The Subject headers match
+        #    2. The References and In-Reply-To headers follow the RFC 2822 standard.
+
+        send(self.sender, self.subject, body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype, _threadId=self.threadId)
+
+    def replyAll(self, body, attachments=None, cc=None, bcc=None, mimeSubtype="plain"):
+        """Like the send() function, but replies to the last message in this thread."""
+
+        # NOTE: Since the ``sender`` argument is ignored by Gmail anyway, I'm not including in this method the
+        # way it is included in ``send()``.
+        pass
+        # TODO - I need to remove EMAIL_ADDRESS from the first argument here:
+        #send(self.sender + ', ' + self.recipient, self.subject, body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype, _threadId=self.threadId)
+
 
 def _parseContentTypeHeaderForEncoding(value):
     """Helper function called by GmailMessage:__init__()."""
@@ -443,9 +486,11 @@ def init(userId="me", tokenFile="token.json", credentialsFile="credentials.json"
             return False
 
 
-def _createMessage(sender, recipient, subject, body, cc=None, bcc=None, mimeSubtype="plain"):
+def _createMessage(sender, recipient, subject, body, cc=None, bcc=None, mimeSubtype="plain", _threadId=None):
     """Creates a MIMEText object and returns it as a base64 encoded string in a ``{'raw': b64_MIMEText_object} ``
-    dictionary, suitable for use by ``_sendMessage()`` and the ``users.messages.send()`` Gmail API."""
+    dictionary, suitable for use by ``_sendMessage()`` and the ``users.messages.send()`` Gmail API.
+
+    Note that the ``sender`` argument seems to be ignored by Gmail, which uses the account's actual email addresss."""
     if not isinstance(mimeSubtype, str):
         raise EZGmailTypeError('wrong type passed for mimeSubtype arg; must be "plain" or "html"')
     mimeSubtype = mimeSubtype.lower()
@@ -460,10 +505,14 @@ def _createMessage(sender, recipient, subject, body, cc=None, bcc=None, mimeSubt
         message["cc"] = cc
     if bcc is not None:
         message["bcc"] = bcc
-    return {"raw": base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")}
+
+    rawMessage = {"raw": base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")}
+    if _threadId is not None:
+        rawMessage['threadId'] = _threadId
+    return rawMessage
 
 
-def _createMessageWithAttachments(sender, recipient, subject, body, attachments, cc=None, bcc=None, mimeSubtype="plain"):
+def _createMessageWithAttachments(sender, recipient, subject, body, attachments, cc=None, bcc=None, mimeSubtype="plain", _threadId=None):
     """Creates a MIMEText object and returns it as a base64 encoded string in a ``{'raw': b64_MIMEText_object}``
     dictionary, suitable for use by ``_sendMessage()`` and the ``users.messages.send()`` Gmail API. File attachments can
     also be added to this message.
@@ -473,6 +522,8 @@ def _createMessageWithAttachments(sender, recipient, subject, body, attachments,
     The ``attachments`` argument is a list of strings of filenames.
 
     The ``cc`` and ``bcc`` arguments are strings with comma-delimited email addresses.
+
+    Note that the ``sender`` argument seems to be ignored by Gmail, which uses the account's actual email addresss.
     """
     if not isinstance(mimeSubtype, str):
         raise EZGmailTypeError('wrong type passed for mimeSubtype arg; must be "plain" or "html"')
@@ -526,7 +577,10 @@ def _createMessageWithAttachments(sender, recipient, subject, body, attachments,
         mimePart.add_header("Content-Disposition", "attachment", filename=filename)
         message.attach(mimePart)
 
-    return {"raw": base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")}
+    rawMessage = {"raw": base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")}
+    if _threadId is not None:
+        rawMessage['threadId'] = _threadId
+    return rawMessage
 
 
 def _sendMessage(message, userId="me"):
@@ -536,8 +590,12 @@ def _sendMessage(message, userId="me"):
     return message
 
 
-def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=None, mimeSubtype="plain"):
-    """Sends an email from the configured Gmail account."""
+def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=None, mimeSubtype="plain", _threadId=None):
+    """Sends an email from the configured Gmail account.
+
+    Note that the ``sender`` argument seems to be ignored by Gmail, which uses the account's actual email addresss.
+
+    TODO - Add additional details to this docstring."""
     if not isinstance(mimeSubtype, str):
         raise EZGmailTypeError('wrong type passed for mimeSubtype arg; must be "plain" or "html"')
     mimeSubtype = mimeSubtype.lower()
@@ -551,9 +609,9 @@ def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=N
         sender = EMAIL_ADDRESS
 
     if attachments is None:
-        msg = _createMessage(sender, recipient, subject, body, cc, bcc, mimeSubtype)
+        msg = _createMessage(sender, recipient, subject, body, cc, bcc, mimeSubtype, _threadId=_threadId)
     else:
-        msg = _createMessageWithAttachments(sender, recipient, subject, body, attachments, cc, bcc, mimeSubtype)
+        msg = _createMessageWithAttachments(sender, recipient, subject, body, attachments, cc, bcc, mimeSubtype, _threadId=_threadId)
     _sendMessage(msg)
 
 
