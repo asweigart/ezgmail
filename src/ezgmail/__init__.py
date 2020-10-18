@@ -421,7 +421,7 @@ class GmailMessage:
         #    1. The Subject headers match
         #    2. The References and In-Reply-To headers follow the RFC 2822 standard.
 
-        send(self.sender, self.subject, body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype, _threadId=self.threadId)
+        return send(self.sender, self.subject, body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype, _threadId=self.threadId)
 
     def replyAll(self, body, attachments=None, cc=None, bcc=None, mimeSubtype="plain"):
         """Like the send() function, but replies to the last message in this thread."""
@@ -612,7 +612,7 @@ def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=N
         msg = _createMessage(sender, recipient, subject, body, cc, bcc, mimeSubtype, _threadId=_threadId)
     else:
         msg = _createMessageWithAttachments(sender, recipient, subject, body, attachments, cc, bcc, mimeSubtype, _threadId=_threadId)
-    _sendMessage(msg)
+    return _sendMessage(msg)
 
 
 def search(query, maxResults=25, userId="me"):
