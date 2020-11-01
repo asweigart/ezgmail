@@ -8,7 +8,7 @@ __version__ = "2020.10.10"
 
 """
 NOTES FOR DEVELOPERS AND CONTRIBUTORS:
-I created this becaues the Gmail API and its documentation is less than ideal.
+I created this because the Gmail API and its documentation is less than ideal.
 EZGmail isn't meant to be comprehensive and do everything the Gmail API lets
 you do, it's meant to make the simple things simple: sending emails, checking
 emails, sending and downloading file attachments, etc. The ezgmail API needs
@@ -180,8 +180,7 @@ def removeQuotedParts(emailText):
 
 
 class GmailMessage:
-    """Represents a Gmail messages. These objects are returned by the users.messages.get() API call. They contain all
-    the header/subject/body information of a single email.
+    """Represents a Gmail messages. These objects are returned by the users.messages.get() API call. They contain all the header/subject/body information of a single email.
 
     The ``sender`` attribute has a string like ``'Google <no-reply@accounts.google.com>'``.
 
@@ -220,7 +219,7 @@ class GmailMessage:
         )  # Filenames of the attachments (can include duplicates). This exists so the user can know what attachments exist. Can include duplicate filenames.
         self._attachmentsInfo = (
             []
-        )  # List of dictionaries: {'filename': filename as str, id': attachment id as str, 'size': size in bytes as int}. This exists because there can be multple attachments with the same filename.
+        )  # List of dictionaries: {'filename': filename as str, id': attachment id as str, 'size': size in bytes as int}. This exists because there can be multiple attachments with the same filename.
 
         # Find the headers for the sender, recipient, and subject
         for header in messageObj["payload"]["headers"]:
@@ -447,11 +446,9 @@ def init(userId="me", tokenFile="token.json", credentialsFile="credentials.json"
     """This function must be called before any other function in EZGmail (and is automatically called by them anyway,
     so you don't have to explicitly call this yourself).
 
-    This function populates the ``SERVICE_GMAIL`` global variable used in all Gmail API cals. It also populates
-    ``EMAIL_ADDRESS`` with a string of the Gmail accont's email address (and sets the global ``LOGGED_IN`` to ``True``). This
-    account is determined by the *credentials.json* file, downloaded from Google, and *token.json*. If the ``tokenFile``
-    file hasn't been generated yet, this function will open the browser to a page to let the user log in to the Gmail
-    account that this module will use.
+    This function populates the ``SERVICE_GMAIL`` global variable used in all Gmail API calls. It also populates
+    ``EMAIL_ADDRESS`` with a string of the Gmail account's email address (and sets the global ``LOGGED_IN`` to ``True``). This account is determined by the *credentials.json* file, downloaded from Google, and *token.json*. If the ``tokenFile``
+    file hasn't been generated yet, this function will open the browser to a page to let the user log in to the Gmail account that this module will use.
 
     If you want to switch to a different Gmail account, call this function again with a different ``tokenFile`` and
     ``credentialsFile`` arguments.
@@ -523,7 +520,7 @@ def _createMessageWithAttachments(sender, recipient, subject, body, attachments,
 
     The ``cc`` and ``bcc`` arguments are strings with comma-delimited email addresses.
 
-    Note that the ``sender`` argument seems to be ignored by Gmail, which uses the account's actual email addresss.
+    Note that the ``sender`` argument seems to be ignored by Gmail, which uses the account's actual email address.
     """
     if not isinstance(mimeSubtype, str):
         raise EZGmailTypeError('wrong type passed for mimeSubtype arg; must be "plain" or "html"')
@@ -593,7 +590,7 @@ def _sendMessage(message, userId="me"):
 def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=None, mimeSubtype="plain", _threadId=None):
     """Sends an email from the configured Gmail account.
 
-    Note that the ``sender`` argument seems to be ignored by Gmail, which uses the account's actual email addresss.
+    Note that the ``sender`` argument seems to be ignored by Gmail, which uses the account's actual email address.
 
     TODO - Add additional details to this docstring."""
     if not isinstance(mimeSubtype, str):
