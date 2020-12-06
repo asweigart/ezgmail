@@ -59,7 +59,8 @@ def test_readEmail():
     #breakpoint()
     assert gmailMsg.body == 'This is the body.\r\n'
     assert gmailMsg.recipient == TEST_EMAIL_ADDRESS
-    assert gmailMsg.timestamp == datetime.datetime(2019, 6, 23, 19, 32, 41)
+    # TODO: The following timestamp is in the central timezone.
+    assert gmailMsg.timestamp == datetime.datetime(2019, 6, 23, 21, 32, 41)
     assert 'attachment.txt' in gmailMsg.attachments
     assert 'attachment.jpg' in gmailMsg.attachments
 
