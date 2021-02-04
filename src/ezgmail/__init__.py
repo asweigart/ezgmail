@@ -33,6 +33,7 @@ from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email import encoders
 import mimetypes
 import os
 import datetime
@@ -568,6 +569,7 @@ def _createMessageWithAttachments(sender, recipient, subject, body, attachments,
             else:
                 mimePart = MIMEBase(main_type, sub_type)
                 mimePart.set_payload(fp.read())
+                encoders.encode_base64(mimePart)
         fp.close()
 
         filename = os.path.basename(attachment)
