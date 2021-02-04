@@ -3,7 +3,9 @@ people who have submitted patches, reported bugs, added translations, helped
 answer newbie questions, and generally made EZGmail that much better:
 
 Al Sweigart https://github.com/asweigart
+Arpit Goyal https://github.com/Arpitgoyalgg
 Chris Garrett https://github.com/cgarrett
 freightflows https://github.com/freightflows
+qqgg231 https://github.com/qqgg231
 William Darragh https://github.com/WillDarragh
 Zachary Wilkins https://github.com/znwilkins
