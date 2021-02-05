@@ -157,11 +157,8 @@ To view the attachments of an email, look at the ``GmailMessage`` object's ``att
 Limitations
 -----------
 
-Currently, EZGmail cannot do the following:
+Currently, EZGmail can't still do some things, but most should work already!
 
-* Read or set labels. (Including marking emails as read.)
-* Sending emails with cc and bcc fields.
-* A lot of other basic features. This package is just a start!
 
 Contribute
 ----------
