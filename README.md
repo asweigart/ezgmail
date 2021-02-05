@@ -7,6 +7,8 @@ The Gmail API quickstart doesn't actually seem to work on Python 3 without some 
 
 The Gmail API documentation by Google is available at https://developers.google.com/gmail/api/
 
+Full EZGmail documentation is available at https://ezgmail.readthedocs.io/en/latest/
+
 Installation
 ------------
 
