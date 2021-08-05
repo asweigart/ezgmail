@@ -4,7 +4,7 @@
 # Note: Unless you know what you're doing, also use the default 'me' value for userId parameters in this module.
 
 
-__version__ = "2021.02.04"
+__version__ = "2021.08.05"
 
 """
 NOTES FOR DEVELOPERS AND CONTRIBUTORS:

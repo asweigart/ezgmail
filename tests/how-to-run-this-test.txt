@@ -1,5 +1,7 @@
 This is a reminder of how I run this unit test so I can update the "that actually works as of <month> <year>" text in the README.
 
+NOTE: Must run in central (US/Canada) time zone.
+
 * Run `pipenv shell`
 * C:\github\ezgmail>python tests\test_ezgmail.py
 
