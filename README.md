@@ -14,9 +14,17 @@ To install with pip, run:
 
     pip install ezgmail
 
-You will need to download a *credentials-gmail.json* file by going to https://developers.google.com/gmail/api/quickstart/python and clicking the **Enable the Gmail API** button (after logging in to your Gmail account). You will need to rename the downloaded *credentials-gmail.json* file to *credentials.json*.
+You will need to download a *credentials.json* file by going to https://console.cloud.google.com/, creating a new project, and enabling the Gmail API by going to APIs & Services > Library and searching for Gmail and enabling it. (You will have to log in to your Gmail account).
 
-Once you have the *credentials.json* file, the first time you run ``import ezgmail`` it will bring up a window asking you to log in to your Gmail account and allow "Quickstart" to access it. A *token.json* file will be generated which your script can use to access your account.
+Go back to the cloud homepage and navigate to APIs & Services > OAuth Consent Screen. Choose External. Name it anything and add your email (twice). Continue with default scopes and default (no) test users. Go back to dashboard and Publish App on the Consent screen.
+
+Navigate to Credentials on the left. Click Create Credentials at the top and make an OAuth Client ID. Choose Desktop App (this is important). Hit OK on the popup and click the download button to the right of the client to download the json.
+
+You will need to rename the downloaded credentials file to *credentials.json* and move it to the same directory as your python script.
+
+Once you have the *credentials.json* file, the first time you run ``import ezgmail`` it will bring up a window asking you to log in to your Gmail account and allow your app to access it. A *token.json* file will be generated which your script can use to access your account.
+
+If you want your credentials to be in another location (not your script's working directory), you can include ``ezgmail.init(tokenFile="", credentialsFile="")`` to your script at the top (adding the paths to the json files in the quotes).
 
 Future calls to ``ezgmail.init()`` or any other ``ezgmail`` function won't require this token-generating step. The ``gmail.init()`` function is automatically called when any other ``ezgmail`` function is called.
 
