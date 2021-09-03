@@ -255,7 +255,7 @@ class GmailMessage:
                     plainTextFound = 1;
                 
                 # Check for TEXT/HTML,unless TEXT/PLAIN is already found
-                 elif (part["mimeType"].upper() == "TEXT/HTML" 
+                elif (part["mimeType"].upper() == "TEXT/HTML" 
                     and "data" in part["body"]
                     and plainTextFound == 0):
 
@@ -434,21 +434,6 @@ class GmailMessage:
 
             downloadedAttachmentFilenames.append(downloadFilename)
         return downloadedAttachmentFilenames
- 
-    def getEncodingAndOriginalBody(self, part):
-    """ Takes in a part from a GmailThread which contains text or html content
-        Finds the encoding of the text/html and adds the body text data to 
-        the originalBody and Body"""
-    
-        # Loop through the headers to find the content type, and extract the char-set from this
-        for header in part["headers"]:
-            if header["name"].upper() == "CONTENT-TYPE":
-                emailEncoding = _parseContentTypeHeaderForEncoding(header["value"])
-
-        # ``originalBody`` has the full body of the email, while the more useful ``body`` only has everything up until the quoted reply part.
-        # If originalBody is not found it has no default value.
-        self.originalBody = base64.urlsafe_b64decode(part["body"]["data"]).decode(emailEncoding)
-        self.body = removeQuotedParts(self.originalBody)
     
     def addLabel(self, label):
         """Add the label ``label`` to every message in this thread."""
@@ -493,6 +478,21 @@ class GmailMessage:
         #send(self.sender + ', ' + self.recipient, self.subject, body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype, _threadId=self.threadId)
 
 
+def getEncodingAndOriginalBody(self, part):
+    """ Takes in a part from a GmailThread which contains text or html content. 
+    Finds the encoding of the text/html and adds the body text data to the originalBody and Body"""
+    
+    # Loop through the headers to find the content type, and extract the char-set from this
+    for header in part["headers"]:
+        if header["name"].upper() == "CONTENT-TYPE":
+            emailEncoding = _parseContentTypeHeaderForEncoding(header["value"])
+
+    # ``originalBody`` has the full body of the email, while the more useful ``body`` only has everything up until the quoted reply part.
+    # If originalBody is not found it has no default value.
+    self.originalBody = base64.urlsafe_b64decode(part["body"]["data"]).decode(emailEncoding)
+    self.body = removeQuotedParts(self.originalBody)
+
+    
 def _parseContentTypeHeaderForEncoding(value):
     """Helper function called by GmailMessage:__init__()."""
     mo = re.search('charset="(.*?)"', value)
