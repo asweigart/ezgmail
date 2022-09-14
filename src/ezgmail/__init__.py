@@ -4,7 +4,7 @@
 # Note: Unless you know what you're doing, also use the default 'me' value for userId parameters in this module.
 
 
-__version__ = "2022.02.24"
+__version__ = "2022.09.14"
 
 """
 NOTES FOR DEVELOPERS AND CONTRIBUTORS:
@@ -19,11 +19,6 @@ phrases to look up on Stackoverflow.
 Users can only be logged in as a single user at a time. This is by design to
 keep things simple. If you need to handle multiple logged in accounts,
 you should probably use the Gmail API directly.
-
-Users need a credentials.json file (downloadable from TODO), then call
-ezgmail.init(), which causes the gmail api
-
-
 """
 
 
