@@ -2,6 +2,6 @@ This is a reminder of how I run this unit test so I can update the "that actuall
 
 NOTE: Must run in central (US/Canada) time zone.
 
-* Run `pipenv shell`
+* C:\github\ezgmail>pipenv shell
 * C:\github\ezgmail>python tests\test_ezgmail.py
 
