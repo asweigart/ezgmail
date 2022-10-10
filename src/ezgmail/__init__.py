@@ -1,10 +1,10 @@
-"""EZGmail - A Pythonic interface to the Gmail API."""
+"""EZGmail - A Pythonic interface to the Gmail API that actually works as of October 2022."""
 
 # By Al Sweigart al@inventwithpython.com
 # Note: Unless you know what you're doing, also use the default 'me' value for userId parameters in this module.
 
 
-__version__ = "2022.09.14"
+__version__ = "2022.10.10"
 
 """
 NOTES FOR DEVELOPERS AND CONTRIBUTORS:

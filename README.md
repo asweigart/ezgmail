@@ -1,6 +1,6 @@
 # EZGmail
 
-A Pythonic interface to the Gmail API that actually works as of September 2022.
+A Pythonic interface to the Gmail API that actually works as of October 2022.
 
 The official Gmail API quickstart doesn't actually seem to work on Python 3 without some adjustments, and the entire documentation is a bit much for someone who just wants to read and send emails from their Gmail account. I created EZGmail as a simple module that just works.
 
@@ -12,7 +12,7 @@ To install with pip, run:
 
     pip install ezgmail
 
-You will need to download a credentials file and set up Google Cloud services using your Gmail account. If you have a Gmail account, you can do this and it is free (unless you are  making large use of the Gmail API by sending out thousands of emails every day.) There's several steps to this, detailed in the following sections. These instructions were last updated September 2022.
+For your Python script to use EZGmail to access Gmail account, you need a credentials JSON file and a token JSON file. This requires a one-time set up on Google Cloud services using your Gmail account. If you have a Gmail account, you can do this and it is free (unless you are  making large use of the Gmail API by sending out thousands of emails every day.) There's several steps to this, detailed in the following sections. These instructions were last updated September 2022.
 
 ### Create a new Google Cloud Project
 

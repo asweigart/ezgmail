@@ -10,7 +10,7 @@ with open('src/ezgmail/__init__.py', 'r') as fo:
 with open('README.md') as fo:
     content = fo.read()
     long_description = content
-    description = re.search('(A Pythonic interface to.*)', content).group(1)
+    description = re.search('(A Pythonic interface to.*)', content).group(1) # Grab the description from the top comment.
 
 setup(
     name='EZGmail',
@@ -38,5 +38,6 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
     ],
 )
