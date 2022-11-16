@@ -421,6 +421,7 @@ class GmailMessage:
         # NOTE: Since the ``sender`` argument is ignored by Gmail anyway, I'm not including in this method the
         # way it is included in ``send()``.
         # TODO - I need to remove EMAIL_ADDRESS from the first argument here:
+        
         # Split recipients into list and remove element == EMAIL_ADDRESS
         recipients = self.recipient.split(',')
         recipients.remove(EMAIL_ADDRESS)
