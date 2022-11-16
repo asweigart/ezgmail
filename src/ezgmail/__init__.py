@@ -420,9 +420,16 @@ class GmailMessage:
 
         # NOTE: Since the ``sender`` argument is ignored by Gmail anyway, I'm not including in this method the
         # way it is included in ``send()``.
-        pass
         # TODO - I need to remove EMAIL_ADDRESS from the first argument here:
-        #send(self.sender + ', ' + self.recipient, self.subject, body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype, _threadId=self.threadId)
+        
+        # Split recipients into list and remove element == EMAIL_ADDRESS
+        recipients = self.recipient.split(',')
+        recipients.remove(EMAIL_ADDRESS)
+        # recompile into a single string including the sender
+        recipients_str = self.sender
+        for i in recipients:
+            recipients_str = recipients_str + ', ' + i
+        send(recipients_str, self.subject, body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype, _threadId=self.threadId)
 
 
 def _parseContentTypeHeaderForEncoding(value):
