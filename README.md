@@ -60,7 +60,7 @@ From the Navigation sidebar menu, click on "APIs & Services" and then "Credentia
 
 On the new page that appears, select "Desktop app" for the "Application type" and leave "Name" as the default "Desktop client 1." (You can change this to a different name if you want, it doesn't appear to the users of your Python script.) Click the blue "CREATE" button.
 
-The pop up that appears shows your , click "DOWNLOAD JSON" to download the credentials file. This file will have a name like *client_secret_282792235794-p2o9gfcub4htibfg2u207gcomco9nqm7.apps.googleusercontent.com.json*. Rename it to *credentials.json* and place it in the same folder that your Python script will be in.
+The pop up that appears shows your newly created OAuth client data. Click "DOWNLOAD JSON" to download the credentials file. This file will have a name like *client_secret_282792235794-p2o9gfcub4htibfg2u207gcomco9nqm7.apps.googleusercontent.com.json*. Rename it to *credentials.json* and place it in the same folder that your Python script will be in.
 
 ### Log In with the Credentials File
 
