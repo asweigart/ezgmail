@@ -503,8 +503,6 @@ def _createMessage(sender, recipient, subject, body, cc=None, bcc=None, mimeSubt
     rawMessage = {"raw": base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")}
     if _threadId is not None:
         rawMessage['threadId'] = _threadId
-    if inReplyTo is not None:
-        rawMessage['In-Reply-To'
     return rawMessage
 
 
