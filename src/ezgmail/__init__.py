@@ -586,7 +586,7 @@ def _sendMessage(message, userId="me"):
     return message
 
 
-def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=None, mimeSubtype="plain", _threadId=None):
+def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=None, mimeSubtype="plain", _threadId=None, in_reply_to=None, references=None):
     """Sends an email from the configured Gmail account.
 
     Note that the ``sender`` argument seems to be ignored by Gmail, which uses the account's actual email address.
@@ -605,9 +605,9 @@ def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=N
         sender = EMAIL_ADDRESS
 
     if attachments is None:
-        msg = _createMessage(sender, recipient, subject, body, cc, bcc, mimeSubtype, _threadId=_threadId)
+        msg = _createMessage(sender, recipient, subject, body, cc, bcc, mimeSubtype, _threadId=_threadId, in_reply_to=in_reply_to, references=references)
     else:
-        msg = _createMessageWithAttachments(sender, recipient, subject, body, attachments, cc, bcc, mimeSubtype, _threadId=_threadId)
+        msg = _createMessageWithAttachments(sender, recipient, subject, body, attachments, cc, bcc, mimeSubtype, _threadId=_threadId, in_reply_to=in_reply_to, references=references)
     _sendMessage(msg)
 
 
