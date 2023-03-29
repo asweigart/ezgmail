@@ -477,7 +477,7 @@ def init(userId="me", tokenFile="token.json", credentialsFile="credentials.json"
 
 
 def _createMessage(sender, recipient, subject, body, cc=None, bcc=None, mimeSubtype="plain", _threadId=None, in_reply_to=None, references=None):
-    print("CREATING MESSAGE YO")
+    print(f"CREATING MESSAGE YO {in_reply_to} {references}")
     """Creates a MIMEText object and returns it as a base64 encoded string in a ``{'raw': b64_MIMEText_object} ``
     dictionary, suitable for use by ``_sendMessage()`` and the ``users.messages.send()`` Gmail API.
 
@@ -586,7 +586,7 @@ def _sendMessage(message, userId="me"):
     return message
 
 
-def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=None, mimeSubtype="plain", _threadId=None, in_reply_to=None, references=None):
+def send(recipient, subjectS, body, attachments=None, sender=None, cc=None, bcc=None, mimeSubtype="plain", _threadId=None, in_reply_to=None, references=None):
     """Sends an email from the configured Gmail account.
 
     Note that the ``sender`` argument seems to be ignored by Gmail, which uses the account's actual email address.
