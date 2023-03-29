@@ -227,6 +227,10 @@ class GmailMessage:
 
             if header["name"].upper() == "CONTENT-TYPE":
                 emailEncoding = _parseContentTypeHeaderForEncoding(header["value"])
+            if header["name"].upper() == "MESSAGE-ID":
+                self.message_id = header["value"]
+            if header["name"].upper() == "REFERENCES":
+                self.references = header["value"]
 
         # Find the plaintext email part, get the encoding, and use it to get the email body.
         if "parts" in messageObj["payload"].keys():
