@@ -413,7 +413,7 @@ class GmailMessage:
         #    1. The Subject headers match
         #    2. The References and In-Reply-To headers follow the RFC 2822 standard.
 
-        send(self.sender, self.subject, body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype, _threadId=self.threadId)
+        send(self.sender, self.subject, body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype, _threadId=self.threadId, )
 
     def replyAll(self, body, attachments=None, cc=None, bcc=None, mimeSubtype="plain"):
         """Like the send() function, but replies to the last message in this thread."""
@@ -476,7 +476,7 @@ def init(userId="me", tokenFile="token.json", credentialsFile="credentials.json"
             return False
 
 
-def _createMessage(sender, recipient, subject, body, cc=None, bcc=None, mimeSubtype="plain", _threadId=None):
+def _createMessage(sender, recipient, subject, body, cc=None, bcc=None, mimeSubtype="plain", _threadId=None, in_reply_to = None, references = None):
     """Creates a MIMEText object and returns it as a base64 encoded string in a ``{'raw': b64_MIMEText_object} ``
     dictionary, suitable for use by ``_sendMessage()`` and the ``users.messages.send()`` Gmail API.
 
@@ -495,10 +495,16 @@ def _createMessage(sender, recipient, subject, body, cc=None, bcc=None, mimeSubt
         message["cc"] = cc
     if bcc is not None:
         message["bcc"] = bcc
+    if inReplyTo is not None:
+        message["in-reply-to"] = in_reply_to
+    if references is not None:
+        message["references"] = references
 
     rawMessage = {"raw": base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")}
     if _threadId is not None:
         rawMessage['threadId'] = _threadId
+    if inReplyTo is not None:
+        rawMessage['In-Reply-To'
     return rawMessage
 
 
