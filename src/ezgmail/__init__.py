@@ -477,6 +477,7 @@ def init(userId="me", tokenFile="token.json", credentialsFile="credentials.json"
 
 
 def _createMessage(sender, recipient, subject, body, cc=None, bcc=None, mimeSubtype="plain", _threadId=None, in_reply_to=None, references=None):
+    print("CREATING MESSAGE YO")
     """Creates a MIMEText object and returns it as a base64 encoded string in a ``{'raw': b64_MIMEText_object} ``
     dictionary, suitable for use by ``_sendMessage()`` and the ``users.messages.send()`` Gmail API.
 
