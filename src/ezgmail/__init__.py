@@ -227,6 +227,10 @@ class GmailMessage:
 
             if header["name"].upper() == "CONTENT-TYPE":
                 emailEncoding = _parseContentTypeHeaderForEncoding(header["value"])
+            if header["name"].upper() == "MESSAGE-ID":
+                self.message_id = header["value"]
+            if header["name"].upper() == "REFERENCES":
+                self.references = header["value"]
 
         # Find the plaintext email part, get the encoding, and use it to get the email body.
         if "parts" in messageObj["payload"].keys():
@@ -402,7 +406,7 @@ class GmailMessage:
         """Move this message to the Trash folder. It will be automatically removed in 30 days."""
         _trash(self)  # The global _trash() function implements this feature.
 
-    def reply(self, body, attachments=None, cc=None, bcc=None, mimeSubtype="plain"):
+    def reply(self, body, attachments=None, cc=None, bcc=None, mimeSubtype="plain", in_reply_to=None, references=None):
         """Like the send() function, but replies to the last message in this thread."""
 
         # NOTE: Since the ``sender`` argument is ignored by Gmail anyway, I'm not including in this method the
@@ -413,7 +417,7 @@ class GmailMessage:
         #    1. The Subject headers match
         #    2. The References and In-Reply-To headers follow the RFC 2822 standard.
 
-        send(self.sender, self.subject, body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype, _threadId=self.threadId)
+        send(self.sender, self.subject, body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype, _threadId=self.threadId, in_reply_to=in_reply_to, references=references)
 
     def replyAll(self, body, attachments=None, cc=None, bcc=None, mimeSubtype="plain"):
         """Like the send() function, but replies to the last message in this thread."""
@@ -476,7 +480,7 @@ def init(userId="me", tokenFile="token.json", credentialsFile="credentials.json"
             return False
 
 
-def _createMessage(sender, recipient, subject, body, cc=None, bcc=None, mimeSubtype="plain", _threadId=None):
+def _createMessage(sender, recipient, subject, body, cc=None, bcc=None, mimeSubtype="plain", _threadId=None, in_reply_to=None, references=None):
     """Creates a MIMEText object and returns it as a base64 encoded string in a ``{'raw': b64_MIMEText_object} ``
     dictionary, suitable for use by ``_sendMessage()`` and the ``users.messages.send()`` Gmail API.
 
@@ -495,6 +499,10 @@ def _createMessage(sender, recipient, subject, body, cc=None, bcc=None, mimeSubt
         message["cc"] = cc
     if bcc is not None:
         message["bcc"] = bcc
+    if in_reply_to is not None:
+        message["in-reply-to"] = in_reply_to
+    if references is not None:
+        message["references"] = references
 
     rawMessage = {"raw": base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")}
     if _threadId is not None:
@@ -581,7 +589,7 @@ def _sendMessage(message, userId="me"):
     return message
 
 
-def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=None, mimeSubtype="plain", _threadId=None):
+def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=None, mimeSubtype="plain", _threadId=None, in_reply_to=None, references=None):
     """Sends an email from the configured Gmail account.
 
     Note that the ``sender`` argument seems to be ignored by Gmail, which uses the account's actual email address.
@@ -600,9 +608,9 @@ def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=N
         sender = EMAIL_ADDRESS
 
     if attachments is None:
-        msg = _createMessage(sender, recipient, subject, body, cc, bcc, mimeSubtype, _threadId=_threadId)
+        msg = _createMessage(sender, recipient, subject, body, cc, bcc, mimeSubtype, _threadId=_threadId, in_reply_to=in_reply_to, references=references)
     else:
-        msg = _createMessageWithAttachments(sender, recipient, subject, body, attachments, cc, bcc, mimeSubtype, _threadId=_threadId)
+        msg = _createMessageWithAttachments(sender, recipient, subject, body, attachments, cc, bcc, mimeSubtype, _threadId=_threadId, in_reply_to=in_reply_to, references=references)
     _sendMessage(msg)
 
 
