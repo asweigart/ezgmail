@@ -739,6 +739,18 @@ def addLabel(*args, **kwargs):
     warnings.warn('Do not call the addLabel() function directly, but rather the addLabel() methods in the GmailMessage and GmailThread classes.')
     _addLabel(*args, **kwargs)
 
+def label_name_to_id(labelName):
+    '''Given a string with the name of a label (i.e "TEST" or "UNREAD") it returns the ID of this label.
+    :param: labelname - String with the LABEL name (i.e "UNREAD")
+    Returns the string with the ID of the LABEL or it returns False in case of an error or not found.
+    '''
+    results = SERVICE_GMAIL.users().labels().list(userId='me').execute()
+    labels = results.get('labels', [])
+
+    for label in labels:
+        if labelName == label['name']:
+            return label['id']
+    return False
 
 def _addLabel(gmailObjects, label, userId="me"):
     # This is a helper function not meant to be called directly by the user.
@@ -747,6 +759,8 @@ def _addLabel(gmailObjects, label, userId="me"):
 
     if isinstance(gmailObjects, (GmailThread, GmailMessage)):
         gmailObjects = [gmailObjects]  # Make this uniformly in a list.
+        
+    label = label_name_to_id(label)
 
     removeUnreadLabelObj = {"removeLabelIds": [], "addLabelIds": [label]}
     for obj in gmailObjects:
