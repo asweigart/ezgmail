@@ -4,7 +4,24 @@
 # Note: Unless you know what you're doing, also use the default 'me' value for userId parameters in this module.
 
 
-__version__ = "2022.10.10"
+import base64
+import copy
+import datetime
+import mimetypes
+import os
+import re
+import warnings
+from email import encoders
+from email.mime.audio import MIMEAudio
+from email.mime.base import MIMEBase
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+from googleapiclient.discovery import build
+from httplib2 import Http
+from oauth2client import client, file, tools
+
 
 """
 NOTES FOR DEVELOPERS AND CONTRIBUTORS:
@@ -21,24 +38,8 @@ keep things simple. If you need to handle multiple logged in accounts,
 you should probably use the Gmail API directly.
 """
 
+__version__ = "2022.10.10"
 
-import base64
-from email.mime.audio import MIMEAudio
-from email.mime.base import MIMEBase
-from email.mime.image import MIMEImage
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email import encoders
-import mimetypes
-import os
-import datetime
-import re
-import copy
-import warnings
-
-from googleapiclient.discovery import build
-from httplib2 import Http
-from oauth2client import file, client, tools
 
 # SCOPES = 'https://www.googleapis.com/auth/gmail.readonly' # read-only mode
 SCOPES = "https://mail.google.com/"  # read-write mode
@@ -50,18 +51,21 @@ LOGGED_IN = False  # False if not logged in, otherwise True
 class EZGmailException(Exception):
     """The base class for all EZGmail-specific problems. If the ``ezgmail`` module raises something that isn't this or
     a subclass of this exception, you can assume it is caused by a bug in EZGmail."""
+
     pass
 
 
 class EZGmailValueError(EZGmailException):
     """The EZGmail module equivalent of ValueError. This exception is raised when a parameter of an incorrect value
     (but not necessarily an incorrect type) is passed to an EZGmail function."""
+
     pass
 
 
 class EZGmailTypeError(EZGmailException):
     """The EZGmail module equivalent of ValueError. This exception is raised when a parameter of an incorrect type
     is passed to an EZGmail function."""
+
     pass
 
 
@@ -96,7 +100,9 @@ class GmailThread:
                 self._messages.append(GmailMessage(msg))
 
         # Quick sanity check to make sure it's never possible to have a GmailThread object with zero messages:
-        assert len(self._messages) > 0, "GmailThread object has zero messages; please file a new bug report issue: https://github.com/asweigart/ezgmail/issues"
+        assert (
+            len(self._messages) > 0
+        ), "GmailThread object has zero messages; please file a new bug report issue: https://github.com/asweigart/ezgmail/issues"
 
         return self._messages  # TODO - Return copy.deepcopy(self._messages)? Would that be safer?
 
@@ -117,7 +123,6 @@ class GmailThread:
         return senderEmails
 
     def latestTimestamp(self):
-        """The """
         return self.messages[-1].timestamp
 
     def addLabel(self, label):
@@ -143,14 +148,14 @@ class GmailThread:
         _trash(self)  # The global _trash() function implements this feature.
 
     # NOTE: Let's see if there's any demand for replying to threads instead of particular messages before adding these methods:
-    #def reply(self, body, attachments=None, cc=None, bcc=None, mimeSubtype="plain"):
+    # def reply(self, body, attachments=None, cc=None, bcc=None, mimeSubtype="plain"):
     #    """Like the send() function, but replies to the last message in this thread."""
     #
     #    # NOTE: Since the ``sender`` argument is ignored by Gmail anyway, I'm not including in this method the
     #    # way it is included in ``send()``.
     #    self.messages[-1].reply(body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype)
     #
-    #def replyAll(self, body, attachments=None, cc=None, bcc=None, mimeSubtype="plain"):
+    # def replyAll(self, body, attachments=None, cc=None, bcc=None, mimeSubtype="plain"):
     #    """Like the send() function, but replies to the last message in this thread."""
     #
     #    # NOTE: Since the ``sender`` argument is ignored by Gmail anyway, I'm not including in this method the
@@ -413,7 +418,16 @@ class GmailMessage:
         #    1. The Subject headers match
         #    2. The References and In-Reply-To headers follow the RFC 2822 standard.
 
-        send(self.sender, self.subject, body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype, _threadId=self.threadId)
+        send(
+            self.sender,
+            self.subject,
+            body,
+            attachments=attachments,
+            cc=cc,
+            bcc=bcc,
+            mimeSubtype=mimeSubtype,
+            _threadId=self.threadId,
+        )
 
     def replyAll(self, body, attachments=None, cc=None, bcc=None, mimeSubtype="plain"):
         """Like the send() function, but replies to the last message in this thread."""
@@ -422,7 +436,7 @@ class GmailMessage:
         # way it is included in ``send()``.
         pass
         # TODO - I need to remove EMAIL_ADDRESS from the first argument here:
-        #send(self.sender + ', ' + self.recipient, self.subject, body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype, _threadId=self.threadId)
+        # send(self.sender + ', ' + self.recipient, self.subject, body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype, _threadId=self.threadId)
 
 
 def _parseContentTypeHeaderForEncoding(value):
@@ -502,7 +516,9 @@ def _createMessage(sender, recipient, subject, body, cc=None, bcc=None, mimeSubt
     return rawMessage
 
 
-def _createMessageWithAttachments(sender, recipient, subject, body, attachments, cc=None, bcc=None, mimeSubtype="plain", _threadId=None):
+def _createMessageWithAttachments(
+    sender, recipient, subject, body, attachments, cc=None, bcc=None, mimeSubtype="plain", _threadId=None
+):
     """Creates a MIMEText object and returns it as a base64 encoded string in a ``{'raw': b64_MIMEText_object}``
     dictionary, suitable for use by ``_sendMessage()`` and the ``users.messages.send()`` Gmail API. File attachments can
     also be added to this message.
@@ -581,7 +597,9 @@ def _sendMessage(message, userId="me"):
     return message
 
 
-def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=None, mimeSubtype="plain", _threadId=None):
+def send(
+    recipient, subject, body, attachments=None, sender=None, cc=None, bcc=None, mimeSubtype="plain", _threadId=None
+):
     """Sends an email from the configured Gmail account.
 
     Note that the ``sender`` argument seems to be ignored by Gmail, which uses the account's actual email address.
@@ -602,7 +620,9 @@ def send(recipient, subject, body, attachments=None, sender=None, cc=None, bcc=N
     if attachments is None:
         msg = _createMessage(sender, recipient, subject, body, cc, bcc, mimeSubtype, _threadId=_threadId)
     else:
-        msg = _createMessageWithAttachments(sender, recipient, subject, body, attachments, cc, bcc, mimeSubtype, _threadId=_threadId)
+        msg = _createMessageWithAttachments(
+            sender, recipient, subject, body, attachments, cc, bcc, mimeSubtype, _threadId=_threadId
+        )
     _sendMessage(msg)
 
 
@@ -714,7 +734,9 @@ def summary(gmailObjects, printInfo=True):
 
 def removeLabel(*args, **kwargs):
     # This deprecation warning added in version 2020.9.30:
-    warnings.warn('Do not call the removeLabel() function directly, but rather the removeLabel() methods in the GmailMessage and GmailThread classes.')
+    warnings.warn(
+        'Do not call the removeLabel() function directly, but rather the removeLabel() methods in the GmailMessage and GmailThread classes.'
+    )
     _removeLabel(*args, **kwargs)
 
 
@@ -736,7 +758,9 @@ def _removeLabel(gmailObjects, label, userId="me"):
 
 def addLabel(*args, **kwargs):
     # This deprecation warning added in version 2020.9.30:
-    warnings.warn('Do not call the addLabel() function directly, but rather the addLabel() methods in the GmailMessage and GmailThread classes.')
+    warnings.warn(
+        'Do not call the addLabel() function directly, but rather the addLabel() methods in the GmailMessage and GmailThread classes.'
+    )
     _addLabel(*args, **kwargs)
 
 
@@ -758,7 +782,9 @@ def _addLabel(gmailObjects, label, userId="me"):
 
 def markAsRead(*args, **kwargs):
     # This deprecation warning added in version 2020.9.30:
-    warnings.warn('Do not call the markAsRead() function directly, but rather the markAsRead() methods in the GmailMessage and GmailThread classes.')
+    warnings.warn(
+        'Do not call the markAsRead() function directly, but rather the markAsRead() methods in the GmailMessage and GmailThread classes.'
+    )
     _markAsRead(*args, **kwargs)
 
 
@@ -769,7 +795,9 @@ def _markAsRead(gmailObjects, userId="me"):
 
 def markAsUnread(*args, **kwargs):
     # This deprecation warning added in version 2020.9.30:
-    warnings.warn('Do not call the markAsUnread() function directly, but rather the markAsUnread() methods in the GmailMessage and GmailThread classes.')
+    warnings.warn(
+        'Do not call the markAsUnread() function directly, but rather the markAsUnread() methods in the GmailMessage and GmailThread classes.'
+    )
     _markAsUnread(*args, **kwargs)
 
 
@@ -790,5 +818,6 @@ def _trash(gmailObjects, userId="me"):
                 SERVICE_GMAIL.users().threads().trash(userId=userId, id=obj.id).execute()
             elif isinstance(obj, GmailMessage):
                 SERVICE_GMAIL.users().messages().trash(userId=userId, id=obj.id).execute()
+
 
 init(_raiseException=False)
