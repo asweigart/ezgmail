@@ -9,6 +9,7 @@ import copy
 import datetime
 import mimetypes
 import os
+import pickle
 import re
 import warnings
 from email import encoders
@@ -18,9 +19,10 @@ from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from google.auth.transport.requests import Request
+from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-from httplib2 import Http
-from oauth2client import client, file, tools
+from googleapiclient.errors import HttpError
 
 
 """
@@ -38,7 +40,7 @@ keep things simple. If you need to handle multiple logged in accounts,
 you should probably use the Gmail API directly.
 """
 
-__version__ = "2022.10.10"
+__version__ = "2024.08.11"
 
 
 # SCOPES = 'https://www.googleapis.com/auth/gmail.readonly' # read-only mode
@@ -449,7 +451,7 @@ def _parseContentTypeHeaderForEncoding(value):
     return emailEncoding
 
 
-def init(userId="me", tokenFile="token.json", credentialsFile="credentials.json", _raiseException=True):
+def init(userId="me", tokenFile="token.json", credentialsFile=".", _raiseException=True):
     """This function must be called before any other function in EZGmail (and is automatically called by them anyway,
     so you don't have to explicitly call this yourself).
 
@@ -460,25 +462,66 @@ def init(userId="me", tokenFile="token.json", credentialsFile="credentials.json"
     If you want to switch to a different Gmail account, call this function again with a different ``tokenFile`` and
     ``credentialsFile`` arguments.
     """
+
+    # If the credentialsFile parameter is '.', assume the credentials json file in the cwd.
+    # In version 2022.10.10 and before (and in Automate the Boring Stuff
+    # 2nd Edition), the credentials file had to be credentials.json.
+    # But this isn't the name it has when you download it from Google
+    # Cloud Console, so we'll just use the client_secret_*.json filename
+    # format it already has, and fall back on credentials-sheets.json.
+    # If credentialsFile is a folder name, use that folder to search for the credentials file.
+
     global SERVICE_GMAIL, EMAIL_ADDRESS, LOGGED_IN
 
     # Set this to False, in case module was initialized before but this current initialization fails.
     EMAIL_ADDRESS = False
     LOGGED_IN = False
 
+    # credentialsFile is a bit misleading of a name because it can be a file or a folder (that contains the credentials file)
+    if os.path.isdir(os.path.abspath(credentialsFile)):
+        # If credentialsFile is a folder, search that folder for credentials-sheets.json or client_secret_*.json files:
+        possibleCredentialsFiles = []
+        for filename in os.listdir(os.path.abspath(credentialsFile)):
+            if (filename.startswith('client_secret_') and filename.endswith('.json')) or filename == 'credentials-sheets.json':
+                possibleCredentialsFiles.append(filename)
+        if len(possibleCredentialsFiles) == 0:
+            credentialsFile = 'credentials-sheets.json'  # Setting it to this nonexistant file will trigger the later EZGmailException.
+        elif len(possibleCredentialsFiles) > 1:
+            raise EZGmailException('You must specify a credentialsFile argument to init() because multiple possible credential files exist in ' + str(os.getcwd()) + ': ' + ', '.join(possibleCredentialsFiles))
+        elif len(possibleCredentialsFiles) == 1:
+            credentialsFile = os.path.join(os.path.abspath(credentialsFile), possibleCredentialsFiles[0])
+
     try:
         if not os.path.exists(credentialsFile):
             raise EZGmailException(
-                'Can\'t find credentials file at %s. You can download this file from https://developers.google.com/gmail/api/quickstart/python and clicking "Enable the Gmail API". Rename the downloaded file to credentials.json.'
+                'Can\'t find credentials file at %s. Follow the instructions at https://pypi.org/project/EZGmail/ to obtain this file.'
                 % (os.path.abspath(credentialsFile))
             )
 
-        store = file.Storage(tokenFile)
-        creds = store.get()
-        if not creds or creds.invalid:
-            flow = client.flow_from_clientsecrets(credentialsFile, SCOPES)
-            creds = tools.run_flow(flow, store)
-        SERVICE_GMAIL = build("gmail", "v1", http=creds.authorize(Http()))
+        # Find the token file, assume it is in the same folder as the credentials file:
+        if not os.path.isabs(tokenFile):
+            tokenFile = os.path.join(os.path.dirname(os.path.abspath(credentialsFile)), tokenFile)
+
+        # Log in to Google Sheets API to generate token-sheets.pickle.
+        creds = None
+        # The file token.pickle stores the user's access and refresh tokens, and is
+        # created automatically when the authorization flow completes for the first
+        # time.
+        if os.path.exists(tokenFile):
+            with open(tokenFile, "rb") as token:
+                creds = pickle.load(token)
+        # If there are no (valid) credentials available, let the user log in.
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(credentialsFile, SCOPES)
+                creds = flow.run_local_server()
+            # Save the credentials for the next run
+            with open(tokenFile, "wb") as token:
+                pickle.dump(creds, token)
+
+        SERVICE_GMAIL = build("gmail", "v1", credentials=creds)
         EMAIL_ADDRESS = SERVICE_GMAIL.users().getProfile(userId=userId).execute()["emailAddress"]
         LOGGED_IN = bool(EMAIL_ADDRESS)
 
