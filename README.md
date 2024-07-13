@@ -1,18 +1,29 @@
 # EZGmail
 
-A Pythonic interface to the Gmail API that actually works as of October 2022.
+A Pythonic interface to the Gmail API that actually works as of July 2024.
 
-The official Gmail API quickstart doesn't actually seem to work on Python 3 without some adjustments, and the entire documentation is a bit much for someone who just wants to read and send emails from their Gmail account. I created EZGmail as a simple module that just works.
+EZGmail is an easier than using the official Google API for doing common email tasks, such as sending email, searching your inbox, reading emails, and more.
 
-You can find additional information about the Gmail API documentation by Google at https://developers.google.com/gmail/api/ and the quickstart guide is at https://developers.google.com/gmail/api/quickstart/python You don't need to review these documents to use EZGmail.
+Also check out [EZSheets](https://pypi.org/project/EZSheets/) for editing Google Sheets with Python.
 
 ## Installation and Setup
 
-To install with pip, run:
+In general, you must [create a Python virtual environment](https://realpython.com/python-virtual-environments-a-primer/) for your Python program and install packages to it. From the terminal/command line, activate the virtual environment and install EZGmail by running `pip install ezgmail` (in Windows) or `pip3 install ezgmail` (in macOS or Linux).
 
-    pip install ezgmail
+For your Python script to use EZGmail to access Gmail account, you need a credentials JSON file and a token JSON file. This requires a one-time set up on Google Cloud services using your Gmail account. If you have a Gmail account, you can do this and it is free (unless you are making large use of the Gmail API by sending out thousands of emails every day.) There's several steps to this, detailed in the following sections. You only need to do these setup steps once, and then your Python program can use EZGmail effortlessly. These instructions were last updated July 2024.
 
-For your Python script to use EZGmail to access Gmail account, you need a credentials JSON file and a token JSON file. This requires a one-time set up on Google Cloud services using your Gmail account. If you have a Gmail account, you can do this and it is free (unless you are  making large use of the Gmail API by sending out thousands of emails every day.) There's several steps to this, detailed in the following sections. These instructions were last updated September 2022.
+For testing, I'd advise using a test Gmail account rather than your actual Gmail account so you don't accidentally delete real emails.
+
+General setup outline:
+
+* Create a new Google Cloud Project from https://console.cloud.google.com
+* Enable the Gmail API from the APIs & Services > Enabled API & services page.
+* Configure the OAuth Consent Screen from the APIs & Services > Oauth consent screen page.
+* Create a new OAuth 2.0 Client ID from the APIs & Services > Credentials page with the `https://mail.google.com/` scope.
+* Download the client_secret_\*.json credentials file.
+* From the Python interactive shell, run `import ezgmail` from the same current working directory as the credentials file.
+* This opens your browser to the OAuth consent screen. Authorize the application to generate the token.json file.
+* With the token.json file in the current working directory, your Python program can now use the `ezgmail` module.
 
 ### Create a new Google Cloud Project
 
@@ -60,19 +71,19 @@ From the Navigation sidebar menu, click on "APIs & Services" and then "Credentia
 
 On the new page that appears, select "Desktop app" for the "Application type" and leave "Name" as the default "Desktop client 1." (You can change this to a different name if you want, it doesn't appear to the users of your Python script.) Click the blue "CREATE" button.
 
-The pop up that appears shows your , click "DOWNLOAD JSON" to download the credentials file. This file will have a name like *client_secret_282792235794-p2o9gfcub4htibfg2u207gcomco9nqm7.apps.googleusercontent.com.json*. Rename it to *credentials.json* and place it in the same folder that your Python script will be in.
+The pop up that appears shows your , click "DOWNLOAD JSON" to download the credentials file. This file will have a name like *client_secret_282792235794-p2o9gfcub4htibfg2u207gcomco9nqm7.apps.googleusercontent.com.json*. Place it in the same folder that your Python script will be in.
 
 ### Log In with the Credentials File
 
-Run the Python interactive shell from the same folder that the *credentials.json* file is in and run `import ezgmail`. Or, place a *.py* Python program in this folder and have it run `import ezgmail`. EZGmail will load and automatically check this folder for a *credentials.json* file and, if found, launches your web browser to the OAuth consent screen. Sign in with the Gmail account you want to access from your Python script. This must be the same email address that you gave for the "test user" when configuring the Google Cloud project's OAuth consent screen.
+Run the Python interactive shell from the same folder that the *client_secret_\*.json* file is in and run `import ezgmail`. Or, place a *.py* Python program in this folder and have it run `import ezgmail`. EZGmail will load and automatically check this folder for a *client_secret_\*.json* file and, if found, launches your web browser to the OAuth consent screen. Sign in with the Gmail account you want to access from your Python script. This must be the same email address that you gave for the "test user" when configuring the Google Cloud project's OAuth consent screen.
 
 You will get a warning message that reads "Google hasn’t verified this app," but that's fine because this is the app (or project) that you've just created yourself. Click the Continue link. You'll come to another page that says "Python Gmail Script wants access to your Google Account" (or whatever name you gave in the OAuth consent screen setup.) Click Continue.
 
-You'll come to a plain web page that says, "The authentication flow has completed." You can now close the browser window. In the same folder as your *credentials.json* file, you'll now see a *token.json* file. Do not share these files: they can be used to log in and access your Gmail account.
+You'll come to a plain web page that says, "The authentication flow has completed." You can now close the browser window. In the same folder as your *client_secret_\*.json* file, you'll now see a *token.json* file. Do not share these files: they can be used to log in and access your Gmail account.
 
 ## Quickstart Guide
 
-After you've set up your credentials and token files, you can import EZGmail with ``import ezgmail``. To see what email address you are sending from, examine ``ezgmail.EMAIL_ADDRESS`` (this is configured by the *token-gmail.json* file you're using, and you must first call ``ezgmail.init()`` or some other ``ezgmail`` function first):
+After you've set up your credentials and token files, you can import EZGmail with ``import ezgmail``. To see what email address you are sending from, examine ``ezgmail.EMAIL_ADDRESS`` (this is configured by the *token.json* file you're using, and you must first call ``ezgmail.init()`` or some other ``ezgmail`` function first):
 
     >>> import ezgmail
     >>> ezgmail.EMAIL_ADDRESS
