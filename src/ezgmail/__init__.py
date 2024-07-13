@@ -40,7 +40,7 @@ keep things simple. If you need to handle multiple logged in accounts,
 you should probably use the Gmail API directly.
 """
 
-__version__ = "2024.08.11"
+__version__ = "2024.08.13"
 
 
 # SCOPES = 'https://www.googleapis.com/auth/gmail.readonly' # read-only mode
