@@ -57,20 +57,6 @@ class EZGmailException(Exception):
     pass
 
 
-class EZGmailValueError(EZGmailException):
-    """The EZGmail module equivalent of ValueError. This exception is raised when a parameter of an incorrect value
-    (but not necessarily an incorrect type) is passed to an EZGmail function."""
-
-    pass
-
-
-class EZGmailTypeError(EZGmailException):
-    """The EZGmail module equivalent of ValueError. This exception is raised when a parameter of an incorrect type
-    is passed to an EZGmail function."""
-
-    pass
-
-
 class GmailThread:
     """Represents a thread of Gmail messages. These objects are returned by the users.threads.get() API call. They
     contain references to a list of GmailMessage objects."""
@@ -539,10 +525,10 @@ def _createMessage(sender, recipient, subject, body, cc=None, bcc=None, mimeSubt
 
     Note that the ``sender`` argument seems to be ignored by Gmail, which uses the account's actual email addresss."""
     if not isinstance(mimeSubtype, str):
-        raise EZGmailTypeError('wrong type passed for mimeSubtype arg; must be "plain" or "html"')
+        raise EZGmailException('wrong type passed for mimeSubtype arg; must be "plain" or "html"')
     mimeSubtype = mimeSubtype.lower()
     if mimeSubtype not in ("html", "plain"):
-        raise EZGmailValueError('wrong string passed for mimeSubtype arg; must be "plain" or "html"')
+        raise EZGmailException('wrong string passed for mimeSubtype arg; must be "plain" or "html"')
 
     message = MIMEText(body, mimeSubtype)
     message["to"] = recipient
@@ -575,10 +561,10 @@ def _createMessageWithAttachments(
     Note that the ``sender`` argument seems to be ignored by Gmail, which uses the account's actual email address.
     """
     if not isinstance(mimeSubtype, str):
-        raise EZGmailTypeError('wrong type passed for mimeSubtype arg; must be "plain" or "html"')
+        raise EZGmailException('wrong type passed for mimeSubtype arg; must be "plain" or "html"')
     mimeSubtype = mimeSubtype.lower()
     if mimeSubtype not in ("html", "plain"):
-        raise EZGmailValueError('wrong string passed for mimeSubtype arg; mimeSubtype arg must be "plain" or "html"')
+        raise EZGmailException('wrong string passed for mimeSubtype arg; mimeSubtype arg must be "plain" or "html"')
 
     message = MIMEMultipart()
     message["to"] = recipient
@@ -649,10 +635,10 @@ def send(
 
     TODO - Add additional details to this docstring."""
     if not isinstance(mimeSubtype, str):
-        raise EZGmailTypeError('wrong type passed for mimeSubtype arg; must be "plain" or "html"')
+        raise EZGmailException('wrong type passed for mimeSubtype arg; must be "plain" or "html"')
     mimeSubtype = mimeSubtype.lower()
     if mimeSubtype not in ("html", "plain"):
-        raise EZGmailValueError('wrong string passed for mimeSubtype arg; mimeSubtype arg must be "plain" or "html"')
+        raise EZGmailException('wrong string passed for mimeSubtype arg; mimeSubtype arg must be "plain" or "html"')
 
     if SERVICE_GMAIL is None:
         init()
