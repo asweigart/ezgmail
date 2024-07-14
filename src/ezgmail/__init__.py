@@ -22,7 +22,6 @@ from email.mime.text import MIMEText
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 
 
 """
@@ -310,7 +309,7 @@ class GmailMessage:
             attachmentIndex = [i for i, v in enumerate(self.attachments) if v == filename][
                 duplicateIndex
             ]  # Find the duplicateIndex-th entry with this filename in self.attachments.
-        except:
+        except Exception:
             raise EZGmailException(
                 "There is no attachment named %s with duplicate index %s." % (filename, duplicateIndex)
             )
@@ -516,7 +515,7 @@ def init(userId="me", tokenFile="token.json", credentialsFile=".", _raiseExcepti
         LOGGED_IN = bool(EMAIL_ADDRESS)
 
         return EMAIL_ADDRESS
-    except:
+    except Exception:
         if _raiseException:
             raise
         else:
