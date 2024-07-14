@@ -20,13 +20,16 @@ def test_init():
     # Test the basic set up with token.json and credentials.json:
     ezgmail.init()
 
+    assert ezgmail.EMAIL_ADDRESS == TEST_EMAIL_ADDRESS
+    assert ezgmail.LOGGED_IN == True
+
     # Test with nonexistant token file:
     #with pytest.raises(ezgmail.EZGmailException):
     #    ezgmail.init(tokenFile='DOES_NOT_EXIST.json', credentialsFile='credentials.json')
 
     # Test with nonexistant credential file:
-    if not os.path.exists('token-custom.json'):
-        shutil.copy('token.json', 'token-custom.json')
+    #if not os.path.exists('token-custom.json'):
+    #    shutil.copy('token.json', 'token-custom.json')
     with pytest.raises(ezgmail.EZGmailException):
         #ezgmail.init(tokenFile='token-custom.json', credentialsFile='DOES_NOT_EXIST.json')
         ezgmail.init(credentialsFile='DOES_NOT_EXIST.json')
@@ -35,12 +38,10 @@ def test_init():
     #ezgmail.init(tokenFile='DOES_NOT_EXIST.json', credentialsFile='credentials.json', _raiseException=False)
 
     # Test the basic set up with custom names:
-    if not os.path.exists('credentials-custom.json'):
-        shutil.copy('credentials.json', 'credentials-custom.json')
-    ezgmail.init(tokenFile='token-custom.json', credentialsFile='credentials-custom.json')
+    #if not os.path.exists('credentials-custom.json'):
+    #    shutil.copy('credentials.json', 'credentials-custom.json')
+    #ezgmail.init(tokenFile='token-custom.json', credentialsFile='credentials-custom.json')
 
-    assert ezgmail.EMAIL_ADDRESS == TEST_EMAIL_ADDRESS
-    assert ezgmail.LOGGED_IN == True
 
 def test_readEmail():
     # There should be an email with subject "DO NOT DELETE" used for the purposes of testing.
@@ -59,8 +60,8 @@ def test_readEmail():
     #breakpoint()
     assert gmailMsg.body == 'This is the body.\r\n'
     assert gmailMsg.recipient == TEST_EMAIL_ADDRESS
-    # TODO: The following timestamp is in the central timezone.
-    assert gmailMsg.timestamp == datetime.datetime(2019, 6, 23, 21, 32, 41)
+
+    assert gmailMsg.timestamp == datetime.datetime(2019, 6, 23, 21, 32, 41) # NOTE: Will fail if you're not in central timezone!
     assert 'attachment.txt' in gmailMsg.attachments
     assert 'attachment.jpg' in gmailMsg.attachments
 
