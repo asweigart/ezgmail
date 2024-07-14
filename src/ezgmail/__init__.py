@@ -58,8 +58,11 @@ class EZGmailException(Exception):
 
 
 class GmailThread:
-    """Represents a thread of Gmail messages. These objects are returned by the users.threads.get() API call. They
-    contain references to a list of GmailMessage objects."""
+    """Represents a conversation thread of Gmail messages. A thread is
+    what you see when you click on an email in gmail.com and see an
+    email and the previous related email replies. These objects are
+    returned by the users.threads.get() API call. They contain
+    references to a list of GmailMessage objects."""
 
     def __init__(self, threadObj):
         self.threadObj = copy.deepcopy(threadObj)
@@ -70,8 +73,9 @@ class GmailThread:
 
     @property
     def text(self):
-        """A list of strings, where each string is the message of a single email in this thread of emails, starting
-        from the oldest at index 0 to the most recent."""
+        """A list of strings, each is the text of a single email in the
+        conversation thread of emails, starting from the oldest at
+        index 0 to the most recent."""
         return [msg.body for msg in self.messages]
 
     @property
