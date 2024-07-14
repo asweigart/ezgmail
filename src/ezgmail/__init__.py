@@ -79,8 +79,9 @@ class GmailThread:
 
     @property
     def messages(self):
-        """The GmailMessage objects of the emails in this thread, starting from the oldest at index 0 to the most
-        recent."""
+        """A list of the GmailMessage objects, each for a single email
+        in the conversation thread, starting from the oldest at index 0
+        to the most recent."""
         if self._messages is None:
             self._messages = []
 
@@ -105,6 +106,7 @@ class GmailThread:
 
     def senders(self):
         """Returns a list of strings of the senders in this thread, from the oldest at index 0 to the most recent."""
+        # TODO - why is this a method and not a property?
         senderEmails = []
         for msg in self.messages:
             if msg.sender == EMAIL_ADDRESS:
