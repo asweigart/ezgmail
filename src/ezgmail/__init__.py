@@ -237,36 +237,81 @@ class GmailMessage:
 
         # Find the plaintext email part, get the encoding, and use it to get the email body.
         if "parts" in messageObj["payload"].keys():
+            # Set flag to track if plain text has been found
+            # Plain text is preferred to HTML.
+            # Alternatively could save plain text and HTML bodies separately
+            plainTextFound = 0;
+            
             for part in messageObj["payload"]["parts"]:
+                # Check for TEXT/PLAIN body
                 if part["mimeType"].upper() == "TEXT/PLAIN" and "data" in part["body"]:
                     # The plain text email will have a part['body']['data'], while attachments
                     # lack this key and instead have part['body']['attachmentId'].
 
                     # This is the plain text email we're looking for. Now find the encoding and the body.
-                    for header in part["headers"]:
-                        if header["name"].upper() == "CONTENT-TYPE":
-                            emailEncoding = _parseContentTypeHeaderForEncoding(header["value"])
+                    getEncodingAndOriginalBody(self, part)
+                    # Set plainTextFound flag so plain text not overwritten with html
+                    plainTextFound = 1;
+                
+                # Check for TEXT/HTML,unless TEXT/PLAIN is already found
+                elif (part["mimeType"].upper() == "TEXT/HTML" 
+                    and "data" in part["body"]
+                    and plainTextFound == 0):
 
-                    # ``originalBody`` has the full body of the email, while the more useful ``body`` only has everything up until the quoted reply part.
-                    self.originalBody = base64.urlsafe_b64decode(part["body"]["data"]).decode(emailEncoding)
-                    self.body = removeQuotedParts(self.originalBody)
-
-                if part["mimeType"].upper() == "MULTIPART/ALTERNATIVE":
-                    # Emails with attachments can have the body of the email in a 'multipart/alternative' area of the dictionary.
-                    # There is a recursive-looking structure here, where ``part`` has it's own 'parts' list.
-                    for multipartPart in part["parts"]:
-                        if multipartPart["mimeType"].upper() == "TEXT/PLAIN" and "data" in multipartPart["body"]:
-                            # Find the encoding and the body.
-                            for header in multipartPart["headers"]:
-                                if header["name"].upper() == "CONTENT-TYPE":
-                                    emailEncoding = _parseContentTypeHeaderForEncoding(header["value"])
-
-                            # ``originalBody`` has the full body of the email, while the more useful ``body`` only has everything up until the quoted reply part.
-                            self.originalBody = base64.urlsafe_b64decode(multipartPart["body"]["data"]).decode(
-                                emailEncoding
-                            )
-                            self.body = removeQuotedParts(self.originalBody)
-
+                    # The html email will have a part['body']['data']										                # This is the html email we're looking for. Now find the encoding and the body.
+                    getEncodingAndOriginalBody(self, part)
+                                    
+                # See if a multipart content exists
+                # This may be multipart/alternative containing the desired body of the email,
+                # Or multipart/related multipart/mixed  which have a multipart/alternative inside contains multipart
+                
+                #Deepcopy part first to stop any problems with other uses of part
+                multipartMultiparts = copy.deepcopy(part)
+                # Flag to track if body text has been found.
+                HTMLorTextFound = 0
+                # Sanity counter to ensure does not get stuck in an infinite loo         
+                whileCounter = 0
+                while ("MULTIPART" in multipartMultiparts["mimeType"].upper() 
+                    and whileCounter <30
+                    and HTMLorTextFound == 0):
+                    
+                    whileCounter = whileCounter + 1;
+                    
+                    if multipartMultiparts["mimeType"].upper() == "MULTIPART/ALTERNATIVE":
+                        # Emails with attachments can have the body of the email in a 'multipart/alternative' area of the dictionary.
+                        # There is a recursive-looking structure here, where ``part`` has it's own 'parts' list.
+                        # Assumes that if both are presetn TEXT/HTML will be in the same multipart, 
+                        # setting HTMLorTextFound and breaking out of the while loop
+                        
+                        for multipartPart in multipartMultiparts["parts"]:
+                            if multipartPart["mimeType"].upper() == "TEXT/PLAIN" and "data" in multipartPart["body"]:
+                                getEncodingAndOriginalBody(self, multipartPart)
+                                # Now we have the body, so break out of while loop by setting HTMLorTextFoundFlag
+                                HTMLorTextFound = 1
+                                plainTextFound = 1
+                            # May not need this here as we are limiting to MultipartAlternative, so should always be TEXT/PLAIN
+                            elif (multipartPart["mimeType"].upper() == "TEXT/HTML" 
+                                and "data" in multipartPart["body"]
+                                and plainTextFound == 0):
+                                
+                                # Find the encoding and the body.
+                                getEncodingAndOriginalBody(self, multipartPart)
+                                # Now we have the body, so break out of while loop by setting HTMLorTextFoundFlag
+                                HTMLorTextFound = 1
+                    
+                    # If not Multipart Alternative, move down the parts list.
+                    # Use else as we have already checked the multipart exists at the while loop
+                    else: 
+                        # Go to next listed parts structure 
+                        # Loop through new multipart to find multipart inside
+                        #intermediatePart = copy.deepcopy(multipartMultiparts)
+                        for testPart in multipartMultiparts["parts"]:
+                            if "MULTIPART" in testPart["mimeType"].upper():
+                        	    multipartMultiparts = (testPart)
+                        	    break
+                        	    # This loop may not find any Multipart Mimetypes
+                        	    # This would result in an empty originalBody
+        
                 if "filename" in part.keys() and part["filename"] != "":
                     # This only gets the attachment ID. The actual attachment must be downloaded with downloadAttachment().
                     attachmentId = part["body"]["attachmentId"]
@@ -388,7 +433,7 @@ class GmailMessage:
 
             downloadedAttachmentFilenames.append(downloadFilename)
         return downloadedAttachmentFilenames
-
+    
     def addLabel(self, label):
         """Add the label ``label`` to every message in this thread."""
         _addLabel(self, label)  # The global _addLabel() function implements this feature.
@@ -441,6 +486,21 @@ class GmailMessage:
         # send(self.sender + ', ' + self.recipient, self.subject, body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype, _threadId=self.threadId)
 
 
+def getEncodingAndOriginalBody(self, part):
+    """ Takes in a part from a GmailThread which contains text or html content. 
+    Finds the encoding of the text/html and adds the body text data to the originalBody and Body"""
+    
+    # Loop through the headers to find the content type, and extract the char-set from this
+    for header in part["headers"]:
+        if header["name"].upper() == "CONTENT-TYPE":
+            emailEncoding = _parseContentTypeHeaderForEncoding(header["value"])
+
+    # ``originalBody`` has the full body of the email, while the more useful ``body`` only has everything up until the quoted reply part.
+    # If originalBody is not found it has no default value.
+    self.originalBody = base64.urlsafe_b64decode(part["body"]["data"]).decode(emailEncoding)
+    self.body = removeQuotedParts(self.originalBody)
+
+    
 def _parseContentTypeHeaderForEncoding(value):
     """Helper function called by GmailMessage:__init__()."""
     mo = re.search('charset="(.*?)"', value)
