@@ -436,7 +436,7 @@ class GmailMessage:
 
         # NOTE: Since the ``sender`` argument is ignored by Gmail anyway, I'm not including in this method the
         # way it is included in ``send()``.
-        pass
+        raise NotImplementedError
         # TODO - I need to remove EMAIL_ADDRESS from the first argument here:
         # send(self.sender + ', ' + self.recipient, self.subject, body, attachments=attachments, cc=cc, bcc=bcc, mimeSubtype=mimeSubtype, _threadId=self.threadId)
 
