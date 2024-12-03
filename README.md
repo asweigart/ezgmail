@@ -1,6 +1,6 @@
 # EZGmail
 
-A Pythonic interface to the Gmail API that actually works as of July 2024.
+A Pythonic interface to the Gmail API that actually works as of December 2024.
 
 EZGmail is an easier than using the official Google API for doing common email tasks, such as sending email, searching your inbox, reading emails, and more.
 
