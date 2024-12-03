@@ -61,7 +61,8 @@ def test_readEmail():
     assert gmailMsg.body == 'This is the body.\r\n'
     assert gmailMsg.recipient == TEST_EMAIL_ADDRESS
 
-    assert gmailMsg.timestamp == datetime.datetime(2019, 6, 23, 21, 32, 41) # NOTE: Will fail if you're not in central timezone!
+    # TODO make a timezone agnostic version of this:
+    assert gmailMsg.timestamp == datetime.datetime(2019, 6, 23, 22, 32, 41) # NOTE: Will fail if you're not in eastern timezone!
     assert 'attachment.txt' in gmailMsg.attachments
     assert 'attachment.jpg' in gmailMsg.attachments
 
